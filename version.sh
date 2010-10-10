@@ -31,6 +31,6 @@ echo "#define __COMMIT__ $(git rev-list $branch | wc -l)" >> inc/version.h
 echo "#define __HEAD__ \"$(git rev-list $branch | head -n 1)\"" >> inc/version.h
 echo "#define __BRANCH__ \"$branch\"" >> inc/version.h
 echo "#define __CHANGED__ \"$(git log -n 1 | grep Date | sed 's/Date:[\t\ ]*//g')\"" >> inc/version.h
-echo "#define __TAG__ \"$(git tag)\"" >> inc/version.h
+echo "#define __TAG__ \"$(git tag | tail -n 1)\"" >> inc/version.h
 
 git add inc/version.h
