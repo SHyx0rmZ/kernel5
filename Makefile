@@ -50,7 +50,7 @@ ARCH_I386 = i386
 
 .PHONY: all amd64 i386 clean clean-for-real clean-deep clean-deep-for-real image-begin image-entry image-end version dirs
 
-all: clean-deep
+all: dirs clean-deep
 	@echo '-------- Building ASXSoft Nuke - Operating System - kernel5 - Codename: 理コ込'
 	@echo
 	@echo "           ████████████████████▒                       ██▒  ███████▒          "
@@ -68,14 +68,14 @@ all: clean-deep
 	@$(MAKE) "ARCH=$(ARCH)" "ARCHFLAGS=$(ARCHFLAGS)" $(ARCH)
 	@$(MAKE) image-end
 
-amd64: clean
+amd64: dirs clean
 	@echo '-------- Architecture amd64'
 	@$(MAKE) "ARCH=$(ARCH_AMD64)" "ARCHFLAGS=$(ARCHFLAGS_AMD64)" $(patsubst $(DIR_SRC)/%.c,$(DIR_OBJ)/%_c.o,$(patsubst $(DIR_SRC)/%.S,$(DIR_OBJ)/%_S.o,$(shell find $(DIR_SRC)/kernel \( -iregex ".*\.c" -or -iregex ".*\.S" \) -and -not -iregex "$(DIR_SRC)/kernel/arch/.*") $(shell find $(DIR_SRC)/kernel/arch/$(ARCH_AMD64) -iregex ".*\.c" -or -iregex ".*\.S")))
 	@$(MAKE) "ARCH=$(ARCH_AMD64)" "ARCHFLAGS=$(ARCHFLAGS_AMD64)" $(TAR_KER)
 	@$(MAKE) "ARCH=$(ARCH_AMD64)" image-entry
 	@$(MAKE) "ARCH=$(ARCH_I386)" "ARCHFLAGS=$(ARCHFLAGS_I386)" i386
 
-i386: clean
+i386: dirs clean
 	@echo '-------- Architecture i386'
 	@$(MAKE) "ARCH=$(ARCH_I386)" "ARCHFLAGS=$(ARCHFLAGS_I386)" $(patsubst $(DIR_SRC)/%.c,$(DIR_OBJ)/%_c.o,$(patsubst $(DIR_SRC)/%.S,$(DIR_OBJ)/%_S.o,$(shell find $(DIR_SRC)/kernel \( -iregex ".*\.c" -or -iregex ".*\.S" \) -and -not -iregex "$(DIR_SRC)/kernel/arch/.*") $(shell find $(DIR_SRC)/kernel/arch/$(ARCH_I386) -iregex ".*\.c" -or -iregex ".*\.S")))
 	@$(MAKE) "ARCH=$(ARCH_I386)" "ARCHFLAGS=$(ARCHFLAGS_I386)" $(TAR_KER)
@@ -133,3 +133,10 @@ version:
 	@echo '-------- Version information'
 	@$(shell $(SH) version.sh)
 	@echo 'VERSION  Updated version information'
+
+dirs:
+	@mkdir -p $(DIR_BIN)
+	@mkdir -p $(DIR_SRC)
+	@mkdir -p $(DIR_INC)
+	@mkdir -p $(DIR_OBJ)
+	@mkdir -p $(DIR_RES)
