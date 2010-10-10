@@ -48,7 +48,7 @@ ARCHFLAGS_I386 = -m32
 ARCH_AMD64 = amd64
 ARCH_I386 = i386
 
-.PHONY: all amd64 i386 clean clean-for-real clean-deep clean-deep-for-real image-begin image-entry image-end version
+.PHONY: all amd64 i386 clean clean-for-real clean-deep clean-deep-for-real image-begin image-entry image-end version dirs
 
 all: clean-deep
 	@echo '-------- Building ASXSoft Nuke - Operating System - kernel5 - Codename: 理コ込'
@@ -117,30 +117,19 @@ clean-deep-for-real:
 
 image-begin:
 	@echo '-------- Floppy image'
-	@echo 'MOUNT'
-	@echo 'drive x:\nfile="$(DIR_BIN)/floppy.img" cylinders=80 heads=2 sectors=18 filter' > ~/.mtoolsrc
-	@cp $(DIR_RES)/base.img.bz2 $(DIR_BIN)/floppy.img.bz2
-	@bunzip2 $(DIR_BIN)/floppy.img.bz2
-	@mkdir -p $(DIR_BIN)/boot/grub
-	@cp $(DIR_RES)/menu.lst $(DIR_BIN)/boot/grub/menu.lst
+	@$(DIR_RES)/image_begin.sh $(DIR_RES)/kernel5.cfg $(DIR_BIN) $(DIR_RES)
+	@echo 'MOUNT    Mounted floppy image'
 
 image-end:
 	@echo '-------- Floppy image'
-	@echo 'UNMOUNT'
-	@mcopy -s $(DIR_BIN)/boot/grub/menu.lst x:/boot/grub/menu.lst
-	@rm ~/.mtoolsrc
+	@$(DIR_RES)/image_end.sh $(DIR_RES)/kernel5.cfg $(DIR_BIN)
+	@echo 'UNMOUNT  Unmounted floppy image'
 
 image-entry:
 	@echo '-------- Floppy image'
-	@echo 'GRUBADD  kernel_$(ARCH)'
-	@echo >> $(DIR_BIN)/boot/grub/menu.lst
-	@echo 'title Nuke, kernel5, $(ARCH)' >> $(DIR_BIN)/boot/grub/menu.lst
-	@echo '\troot (fd0)' >> $(DIR_BIN)/boot/grub/menu.lst
-	@echo '\tkernel /kernel_$(ARCH)' >> $(DIR_BIN)/boot/grub/menu.lst
-	@echo '\tboot' >> $(DIR_BIN)/boot/grub/menu.lst
-	@mcopy $(DIR_BIN)/kernel_$(ARCH) x:/kernel_$(ARCH)
+	@$(DIR_RES)/image_entry.sh $(DIR_RES)/kernel5.cfg $(DIR_BIN) $(ARCH)
 
 version:
 	@echo '-------- Version information'
-	@echo '         Updating version information'
 	@$(shell $(SH) version.sh)
+	@echo 'VERSION  Updated version information'
