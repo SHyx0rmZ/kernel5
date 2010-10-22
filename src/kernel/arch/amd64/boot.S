@@ -35,6 +35,8 @@ loader_init_paging:
     xorl %eax, %eax
     rep stosl
 
+    call loader_map_fill
+
     /* fill in PDP */
     movl $(LOADER_PML4_ADDRESS + 0x200f), %eax
     stosl
@@ -42,23 +44,56 @@ loader_init_paging:
     xorl %eax, %eax
     rep stosl
 
-    /* fill in PD (map multiples of 2 MiB) */
-    movl $0x008b, %esi
+    call loader_map_fill
+
+    /* NOTE: the above two structures don't calculate the number of entries */
+    /* this limits LOADER_MAP_SIZE to 0x40000000 (1 GiB), which is enough */
+
+    /* calculate number of entries to fill in PD */
     xorl %edx, %edx
     movl $(LOADER_MAP_SIZE + 0x1fffff), %eax
     movl $0x200000, %ecx
     divl %ecx
-    mov %eax, %ecx
 
-.local loader_map_loop
-loader_map_loop:
+    movl %eax, %ecx
+    movl $(LOADER_PML4_ADDRESS + 0x300f), %esi
+
+.local loader_map_loop_2mb
+loader_map_loop_2mb:
+
+    /* fill in PD */
+    movl %esi, %eax
+    stosl
+    xorl %eax, %eax
+    stosl
+    addl $0x1000, %esi
+    subl $1, %ecx
+    jnz loader_map_loop_2mb
+
+    call loader_map_fill
+
+    /* calculate number of entries to fill in PT */
+    xorl %edx, %edx
+    movl $(LOADER_MAP_SIZE + 0x0fff), %eax
+    movl $0x1000, %ecx
+    divl %ecx
+
+    movl %eax, %ecx
+    movl $0x000b, %esi
+
+.local loader_map_loop_4kb
+loader_map_loop_4kb:
+
+    /* fill in PT */
     mov %esi, %eax
     stosl
     xor %eax, %eax
     stosl
-    addl $0x00200000, %esi
+    addl $0x1000, %esi
     subl $1, %ecx
-    jnz loader_map_loop
+    jnz loader_map_loop_4kb
+
+    call loader_map_fill
 
     /* activate PAE and PGE */
     movl %cr4, %eax
@@ -68,6 +103,33 @@ loader_map_loop:
     /* load page tables */
     movl $LOADER_PML4_ADDRESS, %eax
     movl %eax, %cr3
+
+    /* NOTE: paging is activated in loader_jmp_to_kernel */
+    /* anything else would give us a headache, due to stack misalignment */
+
+    ret
+
+.local loader_map_fill
+loader_map_fill:
+
+    /* calculate the number of entries not written in this table */
+    xorl %edx, %edx
+    movl %edi, %eax
+    addl $0x0fff, %eax
+    andl $0xfffff000, %eax
+    subl %edi, %eax
+    movl $4, %ecx
+    divl %ecx
+
+    /* and fill them with zeroes */
+    movl %eax, %ecx
+    xorl %eax, %eax
+    rep stosl
+
+    ret
+
+.global loader_jmp_to_kernel
+loader_jmp_to_kernel:
 
     /* activate long mode, long mode still inactive */
     movl $0xc0000080, %ecx
@@ -94,12 +156,10 @@ loader_switch_to_amd64:
     movq $LOADER_PML4_ADDRESS, %rax
     movq %rax, %cr3
 
-.global loader_jmp_to_kernel
-loader_jmp_to_kernel:
-
     /* call void kernel_entry(multiboot_info_t *) */
     movq %rbx, %rdi
     call kernel_entry
+
     ret
 
 .section .data
