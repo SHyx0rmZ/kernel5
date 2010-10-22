@@ -26,7 +26,7 @@ SECTIONS
 {
     . = 0x00100000;
     . = ALIGN(16);
-    start_kernel = .;
+    kernel_area_begin = .;
     .multiboot :
     {
         . = ALIGN(16);
@@ -59,5 +59,5 @@ SECTIONS
         *(.bss)
     }
     . = ALIGN(16);
-    end_kernel = .;
+    kernel_area_end = .;
 }
