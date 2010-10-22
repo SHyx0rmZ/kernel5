@@ -18,8 +18,8 @@
  *  along with Nuke (理コ込).  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _STDINT_H_
-#define _STDINT_H_
+#ifndef _STDINT_H_ARCH_
+#define _STDINT_H_ARCH_
 
 typedef   signed char        int8_t;
 typedef unsigned char       uint8_t;
@@ -31,5 +31,6 @@ typedef   signed long long  int64_t;
 typedef unsigned long long uint64_t;
 
 typedef uint32_t uintptr_t;
+typedef uint32_t size_t;
 
 #endif
