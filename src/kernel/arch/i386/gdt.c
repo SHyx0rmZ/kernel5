@@ -21,7 +21,7 @@
 #include "gdt.h"
 
 /* initialize the GDT */
-void gdt_init()
+void gdt_init(void)
 {
     /* null segment */
     gdt_set_entry(0, 0, 0, 0, 0);

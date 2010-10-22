@@ -35,7 +35,7 @@ void gdt_set_entry(uint8_t index, uint32_t base, uint32_t limit, uint8_t access,
 }
 
 /* loads the GDT */
-void gdt_load()
+void gdt_load(void)
 {
     gdt_pointer.limit = (GDT_MAX_ENTRIES * sizeof(gdt_entry_t) - 1);
     gdt_pointer.base = (uintptr_t)gdt;

@@ -23,8 +23,8 @@
 
 /* functions */
 void gdt_set_entry(uint8_t index, uint32_t base, uint32_t limit, uint8_t access, uint8_t flags);
-void gdt_load();
-void gdt_init();
+void gdt_load(void);
+void gdt_init(void);
 
 /* structs */
 typedef struct
