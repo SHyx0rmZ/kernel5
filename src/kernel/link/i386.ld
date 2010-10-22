@@ -57,6 +57,7 @@ SECTIONS
     {
         . = ALIGN(16);
         *(.bss)
+        *(.loader)
     }
     . = ALIGN(16);
     kernel_area_end = .;

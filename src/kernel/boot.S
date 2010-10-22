@@ -60,7 +60,7 @@
 .int 0
 
 .ifgt LOADER_USE_BSS
-.section .bss
+.section .loader, "aw", @nobits
 
 /* provide extra space for stack and page tables if LOADER_USE_BSS != 0 */
 
@@ -68,8 +68,7 @@
 .space LOADER_STACK_SIZE
 .set LOADER_STACK_ADDRESS, .
 .set LOADER_PML4_ADDRESS, .
-
-.space 0x3000
+.space 0x9000 /* its not yet over */
 .endif
 
 #if LOADER_MAP_SIZE < LOADER_STACK_ADDRESS
