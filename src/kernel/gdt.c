@@ -25,18 +25,18 @@ static gdt_pointer_t gdt_pointer;
 
 void gdt_set_entry(uint8_t index, uint32_t base, uint32_t limit, uint8_t access, uint8_t flags)
 {
-	gdt[index].limit_low = limit & 0xFFFF;
-	gdt[index].flags_and_limit_high = ((flags << 4) & 0xF0) | ((limit >> 16) & 0xF);
-	gdt[index].base_low = base & 0xFFFF;
-	gdt[index].base_middle = (base >> 16) & 0xFF;
-	gdt[index].base_high = (base >> 24) & 0xFF;
-	gdt[index].access = access;
+    gdt[index].limit_low = limit & 0xFFFF;
+    gdt[index].flags_and_limit_high = ((flags << 4) & 0xF0) | ((limit >> 16) & 0xF);
+    gdt[index].base_low = base & 0xFFFF;
+    gdt[index].base_middle = (base >> 16) & 0xFF;
+    gdt[index].base_high = (base >> 24) & 0xFF;
+    gdt[index].access = access;
 }
 
 void gdt_load()
 {
-	gdt_pointer.limit = (GDT_MAX_ENTRIES * sizeof(gdt_entry_t) - 1);
-	gdt_pointer.base = (uintptr_t)gdt;
+    gdt_pointer.limit = (GDT_MAX_ENTRIES * sizeof(gdt_entry_t) - 1);
+    gdt_pointer.base = (uintptr_t)gdt;
 
-	asm("lgdt %0" : : "m" (gdt_pointer));
+    __asm__ ("lgdt %0" : : "m" (gdt_pointer));
 }

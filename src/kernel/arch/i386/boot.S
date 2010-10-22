@@ -23,20 +23,20 @@
 
 .global loader_init_paging
 loader_init_paging:
-	# create page tables
-	movl $LOADER_PML4_ADDRESS, %edi
+    /* create page tables */
+    movl $LOADER_PML4_ADDRESS, %edi
 
-	# fill in PD
-	
-	# fill in PT
-	ret
+    /* fill in PD */
+    
+    /* fill in PT */
+    ret
 
 .global loader_jmp_to_kernel
 loader_jmp_to_kernel:
-	# call void kernel_entry(multiboot_info_t *)
-	push %ebx
-	call kernel_entry
-	ret
+    /* call void kernel_entry(multiboot_info_t *) */
+    push %ebx
+    call kernel_entry
+    ret
 
 .section .data
 
@@ -44,11 +44,11 @@ loader_jmp_to_kernel:
 
 .global loader_gdt
 loader_gdt:
-.int 0x00000000 # null
+.int 0x00000000 /* null */
 .int 0x00000000
-.int 0x0000ffff # 32 bit code
+.int 0x0000ffff /* 32 bit code */
 .int 0x00cf9a00
-.int 0x0000ffff # 32 bit data
+.int 0x0000ffff /* 32 bit data */
 .int 0x00cf9200
 
 .global loader_gdt_descriptor

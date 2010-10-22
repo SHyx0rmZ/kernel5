@@ -22,22 +22,22 @@
 
 void kernel_entry()
 {
-	short *video;
-	char *text = "Kernel up and running...";
-	char *c;
+    short *video;
+    char *text = "Kernel up and running...";
+    char *c;
 
-	for(c = text, video = (short *)0xb8000; *c; video++, c++)
-	{
-		*video = 0x0A00 | *c;
-	}
+    for (c = text, video = (short *)0xb8000; *c; video++, c++)
+    {
+        *video = 0x0A00 | *c;
+    }
 
-	while(1)
-	{
-		asm(
-			"cli \n"
-			"hlt \n"
-		);
-	}
+    while (1)
+    {
+        __asm__ (
+            "cli \n"
+            "hlt \n"
+        );
+    }
 
-	gdt_init();
+    gdt_init();
 }

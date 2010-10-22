@@ -18,9 +18,14 @@
  *  along with Nuke (理コ込).  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define __BUILD__ 1
-#define __COMMIT__ 2
-#define __HEAD__ "3a3196c68c85fa986f2bfa407c93c72a04852faf"
+#ifndef _VERSION_H_
+#define _VERSION_H_
+
+#define __BUILD__ 12
+#define __COMMIT__ 5
+#define __HEAD__ "0d898690a475b12e2e83717ce07e4cce689c913b"
 #define __BRANCH__ "master"
-#define __CHANGED__ "Sun Oct 10 18:03:09 2010 +0200"
+#define __CHANGED__ "Sun Oct 10 19:10:19 2010 +0200"
 #define __TAG__ "理コ込-0.0.0"
+
+#endif

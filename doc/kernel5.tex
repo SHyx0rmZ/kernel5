@@ -1,0 +1,93 @@
+\documentclass[a4paper,openany]{scrbook}
+\usepackage{xunicode}
+\usepackage{xltxtra}
+\usepackage{xeCJK}
+\setCJKmainfont{Sazanami Gothic}
+
+\usepackage{listings}
+\usepackage{fancyhdr,afterpage}
+\usepackage{hyperref}
+
+\subject{Everything you need to know and more about:}
+\title{The Nuke Operating System\\kernel5 - 理コ込}
+\author{Patrick Pokatilo}
+\date{2010.10.21}
+
+\begin{document}
+
+\pagestyle{fancy}
+\setlength{\oddsidemargin}{0mm}
+\setlength{\evensidemargin}{0mm}
+\setlength{\textwidth}{159.2mm}
+\setlength{\parskip}{\medskipamount}
+\setlength{\parindent}{0mm}
+
+\begin{titlepage}
+\maketitle
+\end{titlepage}
+
+\tableofcontents
+
+\part{Introduction}
+\chapter{Prologue}
+Despite being only 18 years old Nuke has already been a big part of
+my life. I first had plans for my own operating system when I was
+15 years old, and I have written several ``prototypes'' sinces then.
+I failed many times and tossed the oriject away more than once. But
+especially in the last year, I think I have learned many important
+things and gained quite some experience.
+
+I have always wanted Nuke to become an Exokernel, despite not knowing
+how to do this exactly. While the most critical design goal was speed
+in the earlier years, I have decided to concentrate on stability and
+safety for now, Because Nuke was designed for speed its first versions
+were written in Assembly, but I soon listened to
+the kind people\footnote{\tt{irc://irc.euirc.net:6667/\#lost}}
+who always told me to ``write in C''. Well, not exactly. I did try
+C for a \textsl{very} tiny version of Nuke but soon tossed it in favor
+of C++. While I certainly don't claim to write good code (nobody does,
+right?) it proved good enough to get through quite a lot of the problems
+that I didn't manage to solve in earlier versions.
+
+This continued well until I wanted to refine my implementation of
+a memory manager. I couldn't quite grasp the correct solution and
+soon found my C++ code to be bloated. Therefore I decided to rewrite
+the kernel from scratch (yet again). This time I would write it in C and, for
+the first time, provide not only an amd64 build, but also an i386 build.
+Well, that's how kernel5 came to life. The next chapters shall define
+my new design goals and details of implementations, so that I won't
+forget how some parts work together. I'll also comment the code well,
+so that you can follow my thought processes and learn something from
+this project.
+
+\part{Implementations}
+\chapter{Memory Management}
+Memory is managed through Paging, therefore it is divided into physical
+and virtual memory management.
+\section{Physical Memory Management}
+The physical memory management stores blocks of arbitrary sizes
+in two doubly linked lists. There is one list for allocated blocks
+and one list for free blocks.
+
+\begin{lstlisting}[basicstyle={\ttfamily},breaklines=true,language=C,numbers=right]
+typedef struct memory_frame
+{
+    uintptr_t address;
+    size_t size;
+    struct memory_frame *next;
+    struct memory_frame *prev;
+} memory_frame_t;
+\end{lstlisting}
+\section{Virtual Memory Management}
+\part{Syscall Interface}
+\chapter{Uses}
+As Nuke is (supposed to be) an Exokernel it relies on syscalls to
+provide applications and libraries with the functionality they need
+to implement a minimal runtime environment. The syscall interface
+enables programs from userspace to request and manage resources.
+\chapter{List of Syscalls}
+\begin{lstlisting}[basicstyle={\ttfamily},breaklines=true,language=C,numbers=right]
+void *syscall_alloc(size_t amount, void *upper_limit)
+void syscall_free(void *position)
+\end{lstlisting}
+\end{document}
