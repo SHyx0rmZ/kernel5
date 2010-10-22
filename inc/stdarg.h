@@ -18,14 +18,15 @@
  *  along with Nuke (理コ込).  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _VERSION_H_
-#define _VERSION_H_
+#ifndef _STDARG_H_
+#define _STDARG_H_
 
-#define __BUILD__ 130
-#define __COMMIT__ 16
-#define __HEAD__ "7df3e11d9d6184c431604e5c228afd6eee8f8395"
-#define __BRANCH__ "master"
-#define __CHANGED__ "Fri Oct 22 12:49:08 2010 +0200"
-#define __TAG__ "理コ込-0.0.0"
+/* FIXME: these most likely only work with GCC */
+typedef __builtin_va_list va_list;
+
+#define va_start(v, l) __builtin_va_start(v, l)
+#define va_end(v)      __builtin_va_end(v)
+#define va_arg(v, l)   __builtin_va_arg(v, l)
+#define va_copy(d, s)  __builtin_va_copy(d, s)
 
 #endif
