@@ -18,44 +18,23 @@
  *  along with Nuke (理コ込).  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _MEMORY_H_
+#define _MEMORY_H_
+
 #include <stdint.h>
+#include <stddef.h>
+#include <stdbool.h>
 
-#include "gdt.h"
 #include "multiboot.h"
-#include "memory.h"
 
-/* the kernels main function, this gets called from boot.S */
-void kernel_entry(multiboot_info_t *info)
+typedef struct memory_area
 {
-    /* initialize and load the GDT */
-    gdt_init();
-    gdt_load();
+    uintptr_t address;
+    size_t size;
+} memory_area_t;
 
-    short *video;
-    char *text = "Kernel up and running...";
-    char *c;
-    short color = 0x0a00;
+memory_area_t *memory_alloc(size_t size, uintptr_t limit, uintptr_t align);
+void memory_free(memory_area_t *area);
+void memory_init(multiboot_memory_t *memory, uint32_t length);
 
-    if((info->flags & (1 << 6)) == 0)
-    {
-        text = "No memory map available. Halting...";
-        color = 0x0c00;
-    }
-
-    memory_init((multiboot_memory_t *)(uintptr_t)info->mmap_addr, info->mmap_length);
-
-    /* print message to screen */
-    for (c = text, video = (short *)0xb8000; *c; video++, c++)
-    {
-        *video = color | *c;
-    }
-
-    /* idle */
-    while (1)
-    {
-        __asm__ (
-            "cli \n"
-            "hlt \n"
-        );
-    }
-}
+#endif
