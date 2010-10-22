@@ -25,7 +25,7 @@
 .set LOADER_STACK_SIZE, 0x1000
 .set LOADER_MAP_SIZE, 0x01000000 /* don't use values above 0x40000000 */
 .set LOADER_STACK_ADDRESS, 0x300000
-.set LOADER_PAGE_ADDRESS, 0x300000
+.set LOADER_PML4_ADDRESS, 0x300000
 
 /* config area end */
 
