@@ -23,6 +23,7 @@
 static gdt_entry_t gdt[GDT_MAX_ENTRIES];
 static gdt_pointer_t gdt_pointer;
 
+/* sets an entry in the GDT */
 void gdt_set_entry(uint8_t index, uint32_t base, uint32_t limit, uint8_t access, uint8_t flags)
 {
     gdt[index].limit_low = limit & 0xFFFF;
@@ -33,6 +34,7 @@ void gdt_set_entry(uint8_t index, uint32_t base, uint32_t limit, uint8_t access,
     gdt[index].access = access;
 }
 
+/* loads the GDT */
 void gdt_load()
 {
     gdt_pointer.limit = (GDT_MAX_ENTRIES * sizeof(gdt_entry_t) - 1);

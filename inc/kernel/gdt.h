@@ -21,24 +21,50 @@
 #ifndef _GDT_H_
 #define _GDT_H_
 
+/* functions */
 void gdt_set_entry(uint8_t index, uint32_t base, uint32_t limit, uint8_t access, uint8_t flags);
 void gdt_load();
 void gdt_init();
 
+/* structs */
 typedef struct
 {
-	uint16_t limit_low;
-	uint16_t base_low;
-	uint8_t base_middle;
-	uint8_t access;
-	uint8_t flags_and_limit_high;
-	uint8_t base_high;
+    uint16_t limit_low;
+    uint16_t base_low;
+    uint8_t base_middle;
+    uint8_t access;
+    uint8_t flags_and_limit_high;
+    uint8_t base_high;
 } __attribute__((packed)) gdt_entry_t;
 
 typedef struct
 {
-	uint16_t limit;
-	uintptr_t base;
+    uint16_t limit;
+    uintptr_t base;
 } __attribute__((packed)) gdt_pointer_t;
+
+/* defines */
+#define GDT_BASE_NULL       0
+#define GDT_LIMIT_FULL      0xffffffff
+
+#define GDT_PRESENT         0x80
+#define GDT_RING_3          0x60
+#define GDT_RING_2          0x40
+#define GDT_RING_1          0x20
+#define GDT_RING_0          0x00
+#define GDT_SEGMENT         0x10
+#define GDT_EXECUTABLE      0x08
+#define GDT_DIRECTION_DOWN  0x04
+#define GDT_DIRECTION_UP    0x00
+#define GDT_CONFORMING      0x04
+#define GDT_READABLE        0x02
+#define GDT_WRITABLE        0x02
+#define GDT_ACCESSED        0x01
+
+#define GDT_GRANULAR        0x08
+#define GDT_PROTECTED_MODE  0x04
+#define GDT_REAL_MODE       0x00
+#define GDT_LONG_MODE       0x02
+#define GDT_AVAILABLE       0x01
 
 #endif

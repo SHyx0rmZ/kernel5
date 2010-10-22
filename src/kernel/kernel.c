@@ -20,17 +20,24 @@
 
 #include "gdt.h"
 
-void kernel_entry()
+/* the kernels main function, this gets called from boot.S */
+void kernel_entry(/* multiboot_info_t *info */)
 {
+    /* initialize and load the GDT */
+    gdt_init();
+    gdt_load();
+
     short *video;
     char *text = "Kernel up and running...";
     char *c;
 
+    /* print message to screen */
     for (c = text, video = (short *)0xb8000; *c; video++, c++)
     {
         *video = 0x0A00 | *c;
     }
 
+    /* idle */
     while (1)
     {
         __asm__ (
@@ -38,6 +45,4 @@ void kernel_entry()
             "hlt \n"
         );
     }
-
-    gdt_init();
 }

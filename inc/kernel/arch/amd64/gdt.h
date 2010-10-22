@@ -25,6 +25,6 @@
 
 #include "../../gdt.h"
 
-#define GDT_MAX_ENTRIES 7
+#define GDT_MAX_ENTRIES 5
 
 #endif
