@@ -155,7 +155,7 @@ void memory_free(memory_area_t *area)
         container = container->next;
     }
 
-    if (container == NULL)
+    if ((container == NULL) || (container->freeable == false))
     {
         while (1)
         {
@@ -167,6 +167,18 @@ void memory_free(memory_area_t *area)
     }
 
     memory_move_from_to(container, &list_used, &list_free);
+
+    if((container->prev != NULL) && ((uintptr_t)(container + sizeof(memory_container_t) + sizeof(memory_area_t) + container->area->size) == container->prev->area->address))
+    {
+        container->prev->area->address = (uintptr_t)container;
+        container->prev->area->size += sizeof(memory_container_t) + sizeof(memory_area_t) + container->area->size;
+        container->prev->next = container->next;
+
+        if(container->next != NULL)
+        {
+            container->next->prev = container->prev;
+        }
+    }
 }
 
 void memory_init(multiboot_memory_t *memory, uint32_t length)
