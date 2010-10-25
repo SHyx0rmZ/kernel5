@@ -19,12 +19,15 @@
  */
 
 #include <stdint.h>
+#include <string.h>
+#include <version.h>
 
 #include "gdt.h"
 #include "idt.h"
 #include "multiboot.h"
 #include "memory.h"
 #include "console.h"
+#include "smp.h"
 
 /* the kernels main function, this gets called from boot.S */
 void kernel_entry(multiboot_info_t *info)
@@ -50,11 +53,9 @@ void kernel_entry(multiboot_info_t *info)
 
     memory_init((multiboot_memory_t *)(uintptr_t)info->mmap_addr, info->mmap_length);
 
-    /* print message to screen */
-    for (c = text, video = (short *)0xb8000; *c; video++, c++)
-    {
-        *video = color | *c;
-    }
+    smp_init();
+
+    printf("%[Kernel up and running...%]", 10);
 
     /* idle */
     while (1)
