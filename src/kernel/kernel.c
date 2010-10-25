@@ -23,6 +23,7 @@
 #include "gdt.h"
 #include "multiboot.h"
 #include "memory.h"
+#include "console.h"
 
 /* the kernels main function, this gets called from boot.S */
 void kernel_entry(multiboot_info_t *info)
