@@ -237,4 +237,54 @@ void memory_init(multiboot_memory_t *memory, uint32_t length)
 
         memory = (multiboot_memory_t *)((uintptr_t)memory + memory->size + 4);
     }
+
+    memory_container_t *iterator = list_free;
+    memory_container_t *next;
+
+    while(iterator != NULL)
+    {
+        next = iterator->next;
+
+        if((iterator->area->address >= (uintptr_t)kernel_area_begin) && ((iterator->area->address + iterator->area->size) <= (uintptr_t)kernel_area_end))
+        {
+            iterator->freeable = false;
+
+            memory_move_from_to(iterator, &list_free, &list_used);
+        }
+        else if((iterator->area->address >= (uintptr_t)kernel_area_begin) && (iterator->area->address <= (uintptr_t)kernel_area_end))
+        {
+            memory_container_t *container = (memory_container_t *)memory_alloc(sizeof(memory_container_t), 0, 0)->address;
+            memory_area_t *area = (memory_area_t *)memory_alloc(sizeof(memory_area_t), 0, 0)->address;
+
+            container->area = area;
+            container->freeable = false;
+            container->next = container;
+            container->prev = container;
+            area->address = iterator->area->address;
+            area->size = (uintptr_t)kernel_area_end - iterator->area->address;
+
+            iterator->area->size -= area->size;
+            iterator->area->address += area->size;
+
+            memory_move_from_to(container, NULL, &list_used);
+        }
+        else if(((iterator->area->address + iterator->area->size) >= (uintptr_t)kernel_area_begin) && ((iterator->area->address + iterator->area->size) <= (uintptr_t)kernel_area_end))
+        {
+            memory_container_t *container = (memory_container_t *)memory_alloc(sizeof(memory_container_t), 0, 0)->address;
+            memory_area_t *area = (memory_area_t *)memory_alloc(sizeof(memory_area_t), 0, 0)->address;
+
+            container->area = area;
+            container->freeable = false;
+            container->next = container;
+            container->prev = container;
+            area->address = (uintptr_t)kernel_area_begin;
+            area->size = iterator->area->address + iterator->area->size - (uintptr_t)kernel_area_begin;
+
+            iterator->area->size -= area->size;
+
+            memory_move_from_to(container, NULL, &list_used);
+        }
+
+        iterator = next;
+    }
 }
