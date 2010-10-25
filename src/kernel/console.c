@@ -20,6 +20,7 @@
 
 #include <stdbool.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "console.h"
 
@@ -109,6 +110,13 @@ void convert_number(uintmax_t number, uint8_t radix, char pad, uintmax_t width, 
         index++;
     }
 
+    if (index == 0)
+    {
+        intermediate[index] = '0';
+
+        index++;
+    }
+
     while ((index < width) && (index < 255))
     {
         intermediate[index] = pad;
@@ -134,10 +142,18 @@ void putc(const char c)
     }
     else if (c == '\n')
     {
-        /* FIXME this needs memmove */
+        video = (short *)((uintptr_t)video - (((uintptr_t)video - 0xb8000) %160) + 160);
     }
     else
     {
+        if ((uintptr_t)video >= (0xb8000 + (160 * 25)))
+        {
+            memmove((void *)0xb8000, (void *)(0xb8000 + 160), 160 * 24);
+            memset((void *)(0xb8000 + (160 * 24)), 0, 160);
+
+            video = (short *)((uintptr_t)video - 160);
+        }
+
         *(video++) = color | c;
     }
 
@@ -168,6 +184,23 @@ int printf(const char *format, ...)
         {
             format++;
 
+            if (*format == '[')
+            {
+                color = va_arg(args, int) << 8;
+
+                format++;
+
+                continue;
+            }
+            else if (*format == ']')
+            {
+                color = 0x0700;
+
+                format++;
+
+                continue;
+            }
+
             uintmax_t width = 0;
             char pad = ' ';
             uintmax_t precision = 0;
@@ -186,7 +219,7 @@ int printf(const char *format, ...)
 
                 format++;
             }
-            
+
             while ((*format >= '0') && (*format <= '9'))
             {
                 width = (width * 10) + (*format - '0');
@@ -247,7 +280,7 @@ int printf(const char *format, ...)
             else if ((*format == 'o') || (*format == 'u') || (*format == 'x') || (*format == 'X'))
             {
                 uintmax_t arg = 0;
-                
+
                 if (precision == 3)
                 {
                     arg = va_arg(args, unsigned long int);
