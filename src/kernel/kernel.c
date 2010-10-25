@@ -21,6 +21,7 @@
 #include <stdint.h>
 
 #include "gdt.h"
+#include "idt.h"
 #include "multiboot.h"
 #include "memory.h"
 #include "console.h"
@@ -32,15 +33,19 @@ void kernel_entry(multiboot_info_t *info)
     gdt_init();
     gdt_load();
 
-    short *video;
-    char *text = "Kernel up and running...";
-    char *c;
-    short color = 0x0a00;
+    idt_init();
+    idt_load();
+
+    memset((void *)0xb8000, 0, 160 * 25);
+
+    printf("ASXSoft %[Nuke%] - kernel5 - %[build %u%] from %[%s%]\n", 9, 9, __BUILD__, 9, __COMPILED__);
+    printf("================================================================================");
 
     if((info->flags & (1 << 6)) == 0)
     {
-        text = "No memory map available. Halting...";
-        color = 0x0c00;
+        printf("%[No memory map supplied!%]", 12);
+
+        while (1);
     }
 
     memory_init((multiboot_memory_t *)(uintptr_t)info->mmap_addr, info->mmap_length);

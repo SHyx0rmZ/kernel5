@@ -81,7 +81,7 @@ loader_map_loop_4kb:
     movl %cr0, %eax
     orl $0x80000000, %eax
     movl %eax, %cr0
-    
+
     /* fill in PT */
     ret
 
