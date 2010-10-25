@@ -18,20 +18,11 @@
  *  along with Nuke (理コ込).  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _STDINT_H_ARCH_
-#define _STDINT_H_ARCH_
+#ifndef _CONSOLE_H_
+#define _CONSOLE_H_
 
-typedef   signed char        int8_t;
-typedef unsigned char       uint8_t;
-typedef   signed short      int16_t;
-typedef unsigned short     uint16_t;
-typedef   signed int        int32_t;
-typedef unsigned int       uint32_t;
-typedef   signed long long  int64_t;
-typedef unsigned long long uint64_t;
+#include <stdint.h>
 
-typedef uint64_t uintptr_t;
-typedef uint64_t size_t;
-typedef uint64_t uintmax_t;
+int printf(const char *format, ...);
 
 #endif
