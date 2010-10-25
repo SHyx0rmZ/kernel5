@@ -27,13 +27,10 @@ SECTIONS
     . = 0x00100000;
     . = ALIGN(16);
     kernel_area_begin = .;
-    .multiboot :
+    .text :
     {
         . = ALIGN(16);
         *(.multiboot)
-    }
-    .text :
-    {
         . = ALIGN(16);
         *(.text)
     }
