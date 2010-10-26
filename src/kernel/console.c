@@ -30,67 +30,103 @@ static int printed = 0;
 static char converted[256];
 static char intermediate[256];
 
-void convert_number(uintmax_t number, uint8_t radix, char pad, uintmax_t width, uintmax_t precision, bool uppercase, bool sign)
+/* convert a number to a string, save result in converted */
+void convert_number(uintmax_t number, uint8_t radix, char pad, uintmax_t width, uintmax_t precision, bool uppercase, uint8_t sign)
 {
+    uint8_t negative = 0;
+
+    /* use signs */
+    if (sign & 4)
+    {
+        negative = 4;
+    }
+    else if (sign & 2)
+    {
+        negative = 2;
+    }
+
+    /* char */
     if (precision == 2)
     {
         number &= (char)-1;
 
-        if (sign && (number >= (1ULL << ((8 * sizeof(char)) - 1))))
+        /* if signed, *= -1 */
+        if ((sign & 1) && (number >= (1ULL << ((8 * sizeof(char)) - 1))))
         {
             number = (~number) + 1;
             number &= (char)-1;
+
+            negative |= 1;
         }
     }
+    /* short */
     else if (precision == 1)
     {
         number &= (short)-1;
 
-        if (sign && (number >= (1ULL << ((8 * sizeof(short)) - 1))))
+        /* if signed, *= -1 */
+        if ((sign & 1) && (number >= (1ULL << ((8 * sizeof(short)) - 1))))
         {
             number = (~number) + 1;
             number &= (short)-1;
+
+            negative |= 1;
         }
     }
+    /* int */
     else if (precision == 0)
     {
         number &= (int)-1;
 
-        if (sign && (number >= (1ULL << ((8 * sizeof(int)) - 1))))
+        /* if signed, *= -1 */
+        if ((sign & 1) && (number >= (1ULL << ((8 * sizeof(int)) - 1))))
         {
             number = (~number) + 1;
             number &= (int)-1;
+
+            negative |= 1;
         }
     }
+    /* long */
     else if (precision == 3)
     {
         number &= (long)-1;
 
-        if (sign && (number >= (1ULL << ((8 * sizeof(long)) - 1))))
+        /* if signed, *= -1 */
+        if ((sign & 1) && (number >= (1ULL << ((8 * sizeof(long)) - 1))))
         {
             number = (~number) + 1;
             number &= (long)-1;
+
+            negative |= 1;
         }
     }
+    /* long long */
     else
     {
         number &= (long long)-1;
 
-        if (sign && (number >= (1ULL << ((8 * sizeof(long long)) - 1))))
+        /* if signed, *= -1 */
+        if ((sign & 1) && (number >= (1ULL << ((8 * sizeof(long long)) - 1))))
         {
             number = (~number) + 1;
             number &= (long long)-1;
+
+            negative |= 1;
         }
-        }
+    }
 
     uint8_t index = 0;
 
+    /* convert number to string */
     while (number && index < 255)
     {
+        /* get digit */
         uint8_t digit = number % radix;
 
         number /= radix;
 
+        /* convert digit to char */
         if (digit >= 10)
         {
             if (uppercase)
@@ -110,6 +146,7 @@ void convert_number(uintmax_t number, uint8_t radix, char pad, uintmax_t width, 
         index++;
     }
 
+    /* handle special case */
     if (index == 0)
     {
         intermediate[index] = '0';
@@ -117,6 +154,28 @@ void convert_number(uintmax_t number, uint8_t radix, char pad, uintmax_t width, 
         index++;
     }
 
+    /* add sign */
+    if (negative && ((index >= width) || (pad == ' ')))
+    {
+        if (negative & 1)
+        {
+            intermediate[index] = '-';
+        }
+        else if (negative & 4)
+        {
+            intermediate[index] = ' ';
+        }
+        else
+        {
+            intermediate[index] = '+';
+        }
+
+        negative = 0;
+
+        index++;
+    }
+
+    /* pad */
     while ((index < width) && (index < 255))
     {
         intermediate[index] = pad;
@@ -126,26 +185,44 @@ void convert_number(uintmax_t number, uint8_t radix, char pad, uintmax_t width, 
 
     index--;
 
+    /* add sign */
+    if (negative)
+    {
+        if (negative & 1)
+        {
+            intermediate[index] = '-';
+        }
+        else
+        {
+            intermediate[index] = '+';
+        }
+    }
+
+    /* reverse string */
     for (width = 0; index != (uint8_t)-1; index--, width++)
     {
         converted[width] = intermediate[index];
     }
 
+    /* add null byte */
     converted[width] = 0;
 }
 
 void putc(const char c)
 {
+    /* reset caret to beginning of line */
     if (c == '\r')
     {
         video = (short *)((uintptr_t)video - (((uintptr_t)video - 0xb8000) % 160));
     }
+    /* reset caret to beginning of next line */
     else if (c == '\n')
     {
         video = (short *)((uintptr_t)video - (((uintptr_t)video - 0xb8000) %160) + 160);
     }
     else
     {
+        /* scroll lines */
         if ((uintptr_t)video >= (0xb8000 + (160 * 25)))
         {
             memmove((void *)0xb8000, (void *)(0xb8000 + 160), 160 * 24);
@@ -176,6 +253,7 @@ int printf(const char *format, ...)
 
     va_list args;
 
+    /* initialize variable argument list */
     va_start(args, format);
 
     while (*format)
@@ -184,6 +262,7 @@ int printf(const char *format, ...)
         {
             format++;
 
+            /* not in standard, use this for color */
             if (*format == '[')
             {
                 color = va_arg(args, int) << 8;
@@ -192,6 +271,7 @@ int printf(const char *format, ...)
 
                 continue;
             }
+            /* not in standard, reset to default color */
             else if (*format == ']')
             {
                 color = 0x0700;
@@ -203,9 +283,11 @@ int printf(const char *format, ...)
 
             uintmax_t width = 0;
             char pad = ' ';
-            uintmax_t precision = 0;
+            uintmax_t precision = 0; /* int */
             bool alternate = false;
+            uint8_t sign = 0;
 
+            /* use alternate forms for o, x, X, a, A, e, E, f, F, g and G */
             if (*format == '#')
             {
                 alternate = true;
@@ -213,6 +295,7 @@ int printf(const char *format, ...)
                 format++;
             }
 
+            /* pad with zero */
             if (*format == '0')
             {
                 pad = '0';
@@ -220,6 +303,23 @@ int printf(const char *format, ...)
                 format++;
             }
 
+            /* pad positives with space */
+            if (*format == ' ')
+            {
+                sign = 4;
+
+                format++;
+            }
+
+            /* always add sign */
+            if (*format == '+')
+            {
+                sign = 2;
+
+                format++;
+            }
+
+            /* get width */
             while ((*format >= '0') && (*format <= '9'))
             {
                 width = (width * 10) + (*format - '0');
@@ -227,14 +327,17 @@ int printf(const char *format, ...)
                 format++;
             }
 
+            /* get precision */
             if (*format == 'h')
             {
+                /* short */
                 precision = 1;
 
                 format++;
 
                 if (*format == 'h')
                 {
+                    /* char */
                     precision = 2;
 
                     format++;
@@ -242,22 +345,26 @@ int printf(const char *format, ...)
             }
             else if (*format == 'l')
             {
+                /* long */
                 precision = 3;
 
                 format++;
 
                 if (*format == 'l')
                 {
+                    /* long long */
                     precision = 4;
 
                     format++;
                 }
             }
 
+            /* signed int */
             if ((*format == 'd') || (*format == 'i'))
             {
                 uintmax_t arg = 0;
 
+                /* get argument, char and short are passed as int */
                 if (precision == 3)
                 {
                     arg = va_arg(args, long int);
@@ -271,16 +378,22 @@ int printf(const char *format, ...)
                     arg = va_arg(args, int);
                 }
 
-                convert_number(arg, 10, pad, width, precision, false, true);
+                sign++;
 
+                /* convert number */
+                convert_number(arg, 10, pad, width, precision, false, sign);
+
+                /* and print it */
                 puts(converted);
 
                 format++;
             }
+            /* unsigned int */
             else if ((*format == 'o') || (*format == 'u') || (*format == 'x') || (*format == 'X'))
             {
                 uintmax_t arg = 0;
 
+                /* get argument, char and short are passed as int */
                 if (precision == 3)
                 {
                     arg = va_arg(args, unsigned long int);
@@ -301,11 +414,13 @@ int printf(const char *format, ...)
                         puts("0");
                     }
 
-                    convert_number(arg, 8, pad, width, precision, false, false);
+                    /* convert number */
+                    convert_number(arg, 8, pad, width, precision, false, sign);
                 }
                 else if (*format == 'u')
                 {
-                    convert_number(arg, 10, pad, width, precision, false, false);
+                    /* convert number */
+                    convert_number(arg, 10, pad, width, precision, false, sign);
                 }
                 else if (*format == 'x')
                 {
@@ -314,7 +429,8 @@ int printf(const char *format, ...)
                         puts("0x");
                     }
 
-                    convert_number(arg, 16, pad, width, precision, false, false);
+                    /* convert number */
+                    convert_number(arg, 16, pad, width, precision, false, sign);
                 }
                 else
                 {
@@ -323,13 +439,16 @@ int printf(const char *format, ...)
                         puts("0X");
                     }
 
-                    convert_number(arg, 16, pad, width, precision, true, false);
+                    /* convert number */
+                    convert_number(arg, 16, pad, width, precision, true, sign);
                 }
 
+                /* and print it */
                 puts(converted);
 
                 format++;
             }
+            /* const char * */
             else if (*format == 's')
             {
                 const char *arg = va_arg(args, const char *);
@@ -338,12 +457,15 @@ int printf(const char *format, ...)
 
                 format++;
             }
+            /* void * */
             else if (*format == 'p')
             {
                 void *arg = va_arg(args, void *);
 
-                convert_number((uintmax_t)(uintptr_t)arg, 16, pad, width, precision, false, false);
+                /* convert number */
+                convert_number((uintmax_t)(uintptr_t)arg, 16, pad, width, precision, false, sign);
 
+                /* and print it */
                 puts(converted);
 
 
@@ -361,6 +483,7 @@ int printf(const char *format, ...)
         }
         else
         {
+            /* just put char */
             putc(*format);
 
             format++;
