@@ -7,6 +7,7 @@
 \usepackage{listings}
 \usepackage{fancyhdr,afterpage}
 \usepackage{hyperref}
+\usepackage{ulem}
 
 \subject{Everything you need to know and more about:}
 \title{The Nuke Operating System\\kernel5 - 理コ込}
@@ -14,6 +15,7 @@
 \date{2010.10.21}
 
 \begin{document}
+\normalem
 
 \pagestyle{fancy}
 \setlength{\oddsidemargin}{0mm}
@@ -67,18 +69,26 @@ and virtual memory management.
 \section{Physical Memory Management}
 The physical memory management stores blocks of arbitrary sizes
 in two doubly linked lists. There is one list for allocated blocks
-and one list for free blocks.
+and one list for free blocks. I use lists so I don't have to worry about
+where to save memory management data, as it can simply be stored into the
+beginning of each memory blocks. When \texttt{memory\_init()} is called, the
+two lists are initialized according to the multiboot memory map. Note that
+used memory blocks may be unfreeable. \emph{Trying to free an unfreeable
+memory block will terminate the calling process.}
 
 \begin{lstlisting}[basicstyle={\ttfamily},breaklines=true,language=C,numbers=right]
-typedef struct memory_frame
+typedef struct memory_area
 {
     uintptr_t address;
     size_t size;
-    struct memory_frame *next;
-    struct memory_frame *prev;
-} memory_frame_t;
+} memory_area_t;
+
+memory_area_t *memory_alloc(size_t size, uintptr_t limit, uintptr_t align);
+void memory_free(memory_area_t *area);
 \end{lstlisting}
 \section{Virtual Memory Management}
+Is not yet implemented and probably never will be. It most likely will be
+done by the libOS.
 \part{Syscall Interface}
 \chapter{Uses}
 As Nuke is (supposed to be) an Exokernel it relies on syscalls to
@@ -86,8 +96,20 @@ provide applications and libraries with the functionality they need
 to implement a minimal runtime environment. The syscall interface
 enables programs from userspace to request and manage resources.
 \chapter{List of Syscalls}
-\begin{lstlisting}[basicstyle={\ttfamily},breaklines=true,language=C,numbers=right]
-void *syscall_alloc(size_t amount, void *upper_limit)
-void syscall_free(void *position)
-\end{lstlisting}
+\section{\texttt{memory\_area\_t *memory\_alloc(size\_t size, uintptr\_t limit, uintptr\_t align)}}
+Request a memory area of minimum size \emph{size}. The area's end (address
++ size) must not lie above \emph{limit}. Use a \emph{limit} of 0 to not limit
+the result. The memory area is aligned on \emph{align} bytes. \textbf{Always
+use a power of 2 for \emph{align}}. Set \emph{align} to 0 to ignore the
+alignment.
+\section{\texttt{void memory\_free(memory\_area\_t *area)}}
+Free a memory area. If area is not a valid memory area (wasn't supplied by
+\texttt{memory\_alloc()}), kill the process.
+\part{Additions}
+\chapter{Known Bugs}
+\begin{itemize}
+\item \texttt{memory\_init()} may crash due to a \#PF, when a memory area starts at a high enough address.
+\item \texttt{memory\_alloc()} will return complete garbage if called with a
+value for \emph{align} that is not a power of 2.
+\end{itemize}
 \end{document}
