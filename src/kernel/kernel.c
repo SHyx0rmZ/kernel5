@@ -28,6 +28,7 @@
 #include "memory.h"
 #include "console.h"
 #include "smp.h"
+#include "pic.h"
 
 /* the kernels main function, this gets called from boot.S */
 void kernel_entry(multiboot_info_t *info)
@@ -38,6 +39,8 @@ void kernel_entry(multiboot_info_t *info)
 
     idt_init();
     idt_load();
+
+    pic_init();
 
     memset((void *)0xb8000, 0, 160 * 25);
 
@@ -57,11 +60,16 @@ void kernel_entry(multiboot_info_t *info)
 
     printf("%[Kernel up and running...%]", 10);
 
+    __asm__ (
+        "sti \n"
+        "hlt \n"
+    );
+
     /* idle */
     while (1)
     {
         __asm__ (
-            "cli \n"
+            /*"cli \n"*/
             "hlt \n"
         );
     }
