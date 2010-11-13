@@ -40,5 +40,23 @@ void gdt_load(void)
     gdt_pointer.limit = (GDT_MAX_ENTRIES * sizeof(gdt_entry_t) - 1);
     gdt_pointer.base = (uintptr_t)gdt;
 
-    __asm__ ("lgdt %0" : : "m" (gdt_pointer));
+    struct {
+        uint32_t offset;
+        uint16_t segment;
+    } jump_address;
+
+    jump_address.segment = 0x08;
+
+    __asm__ (
+        "lgdt %0 \n"
+        "mov %1, %%ds \n"
+        "mov %1, %%es \n"
+        "mov %1, %%ss \n"
+        "mov %2, %%fs \n"
+        "mov %2, %%gs \n"
+        "movl $gdt_jump, %3 \n"
+        "ljmpl *%3 \n"
+        "gdt_jump: \n"
+        :: "m" (gdt_pointer), "r"(0x10), "r"(0), "m"(jump_address)
+    );
 }
