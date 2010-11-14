@@ -132,6 +132,7 @@ memory_area_t *memory_alloc(size_t size, uintptr_t limit, uintptr_t align)
     }
     else
     {
+        /* FIXME: this should really test for align to be a power of 2 (use the BSF and BSR instructions to do so) */
         /* FIXME: space potentially wasted */
         /* we need to align the memory */
         uintptr_t address = ((container->area->address + align - 1) & (~(align - 1)));

@@ -40,7 +40,7 @@ cpu_state_t *isr_handler(cpu_state_t *cpu)
     else if(cpu->vector < 0x30)
     {
         /* IRQ */
-        printf("\n%[Encountered IRQ!%]\nVector: #%u", 12, cpu->vector);
+        printf("\n%[Encountered IRQ!%]\nVector: #% 2u", 12, cpu->vector);
 
         if(cpu->vector >= 0x28)
         {
@@ -53,10 +53,6 @@ cpu_state_t *isr_handler(cpu_state_t *cpu)
     {
         printf("\nVector: #% 2u", cpu->vector);
     }
-
-    __asm__ (
-        "sti"
-    );
 
     return cpu;
 

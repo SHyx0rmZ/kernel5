@@ -42,4 +42,13 @@ void pic_init()
     /* mask nothing */
     outb(0x21, 0x00);
     outb(0xA1, 0x00);
+
+    /* this doesn't really belong here, but I don't care for now */
+    /* this pretty much generates an IRQ with 249.98 Hz */
+    uint16_t timer_divisor = 4773;
+
+    /* tell the PIT it will get initialised and send data */
+    outb(0x43, 0x34);
+    outb(0x40, (timer_divisor & 0xFF));
+    outb(0x40, (timer_divisor >> 8));
 }

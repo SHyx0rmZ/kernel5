@@ -62,14 +62,12 @@ void kernel_entry(multiboot_info_t *info)
 
     __asm__ (
         "sti \n"
-        "hlt \n"
     );
 
     /* idle */
     while (1)
     {
         __asm__ (
-            /*"cli \n"*/
             "hlt \n"
         );
     }
