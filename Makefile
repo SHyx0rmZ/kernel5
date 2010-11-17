@@ -49,7 +49,7 @@ ARCHFLAGS_I386 = -m32
 ARCH_AMD64 = amd64
 ARCH_I386 = i386
 
-.PHONY: all amd64 i386 i386-extract clean clean-for-real clean-deep clean-deep-for-real image-begin image-entry image-end version dirs
+.PHONY: all amd64 i386 i386-extract clean clean-for-real clean-deep clean-deep-for-real image-begin image-entry image-end version dirs tools
 
 all: dirs clean-deep
 	@echo '-------- Building ASXSoft Nuke - Operating System - kernel5 - Codename: 理コ込'
@@ -69,14 +69,14 @@ all: dirs clean-deep
 	@$(MAKE) "ARCH=$(ARCH)" "ARCHFLAGS=$(ARCHFLAGS)" $(ARCH)
 	@$(MAKE) image-end
 
-amd64: dirs clean
+amd64: dirs clean tools
 	@echo '-------- Architecture amd64'
 	@$(MAKE) "ARCH=$(ARCH_AMD64)" "ARCHFLAGS=$(ARCHFLAGS_AMD64)" $(patsubst $(DIR_SRC)/%.c,$(DIR_OBJ)/%_c.o,$(patsubst $(DIR_SRC)/%.S,$(DIR_OBJ)/%_S.o,$(shell find $(DIR_SRC)/kernel \( -iregex ".*\.c" -or -iregex ".*\.S" \) -and -not -iregex "$(DIR_SRC)/kernel/arch/.*") $(shell find $(DIR_SRC)/kernel/arch/$(ARCH_AMD64) -iregex ".*\.c" -or -iregex ".*\.S")))
 	@$(MAKE) "ARCH=$(ARCH_AMD64)" "ARCHFLAGS=$(ARCHFLAGS_AMD64)" $(TAR_KER)
 	@$(MAKE) "ARCH=$(ARCH_AMD64)" image-entry
 	@$(MAKE) "ARCH=$(ARCH_I386)" "ARCHFLAGS=$(ARCHFLAGS_I386)" i386
 
-i386: dirs clean
+i386: dirs clean tools
 	@echo '-------- Architecture i386'
 	@$(MAKE) "ARCH=$(ARCH_I386)" "ARCHFLAGS=$(ARCHFLAGS_I386)" $(patsubst $(DIR_SRC)/%.c,$(DIR_OBJ)/%_c.o,$(patsubst $(DIR_SRC)/%.S,$(DIR_OBJ)/%_S.o,$(shell find $(DIR_SRC)/kernel \( -iregex ".*\.c" -or -iregex ".*\.S" \) -and -not -iregex "$(DIR_SRC)/kernel/arch/.*") $(shell find $(DIR_SRC)/kernel/arch/$(ARCH_I386) -iregex ".*\.c" -or -iregex ".*\.S")))
 	@$(MAKE) i386-extract
@@ -86,6 +86,15 @@ i386: dirs clean
 i386-extract: $(shell $(CC) $(ARCHFLAGS_I386) --print-libgcc-file-name) dirs
 	@$(AR) -x $$($(CC) $(ARCHFLAGS_I386) --print-libgcc-file-name) _umoddi3.o _udivdi3.o
 	@mv _umoddi3.o _udivdi3.o $(DIR_EXT)
+
+tools: dirs
+	@echo '-------- Tools'
+	@$(MAKE) $(patsubst $(DIR_SRC)/tools/%.c,$(DIR_RES)/tools/%, $(shell find $(DIR_SRC)/tools -iregex ".*\.c"))
+
+$(DIR_RES)/tools/%: $(DIR_SRC)/tools/%.c
+	@mkdir -p $(dir $@)
+	@echo 'CC       $(patsubst $(DIR_RES)/%,%,$@)'
+	@$(CC) -o $@ $^
 
 $(TAR_KER): $(patsubst $(DIR_SRC)/%.c,$(DIR_OBJ)/%_c.o,$(patsubst $(DIR_SRC)/%.S,$(DIR_OBJ)/%_S.o,$(shell find $(DIR_SRC)/kernel \( -iregex ".*\.c" -or -iregex ".*\.S" \) -and -not -iregex "$(DIR_SRC)/kernel/arch/.*") $(shell find $(DIR_SRC)/kernel/arch/$(ARCH) -iregex ".*\.c" -or -iregex ".*\.S"))) $(shell find $(DIR_EXT) -type f 2> /dev/null)
 	@mkdir -p $(dir $@)
