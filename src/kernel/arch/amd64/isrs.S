@@ -81,7 +81,6 @@ isr_stub 46
 isr_stub 47
 
 isr_named_stub null, 0xdead
-isr_named_stub system, 81
 
 .global isr_stub_common
 isr_stub_common:
@@ -122,4 +121,15 @@ isr_stub_common:
     popq %rax
 
     add $16, %rsp
+    iretq
+
+.global isr_stub_system
+isr_stub_system:
+    pushq %rbx
+
+    .extern syscall_table
+    leaq syscall_table(,%rdi,8), %rbx
+    call *(%rbx)
+
+    popq %rbx
     iretq

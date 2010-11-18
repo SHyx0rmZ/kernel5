@@ -61,7 +61,7 @@ void memory_move_from_to(memory_container_t *container, memory_container_t **fro
     }
 
     /* insert element */
-    if(iterator == NULL)
+    if (iterator == NULL)
     {
         *to = container;
 
@@ -103,14 +103,14 @@ memory_area_t *memory_alloc(size_t size, uintptr_t limit, uintptr_t align)
     }
 
     /* no container available */
-    if(container == NULL)
+    if (container == NULL)
     {
         return NULL;
     }
 
     memory_container_t *selected = container;
 
-    if(align == 0)
+    if (align == 0)
     {
         /* hey, we can fit another container's description in here */
         /* go ahead and split the damn thing into two */
@@ -179,7 +179,7 @@ void memory_free(memory_area_t *area)
     memory_move_from_to(container, &list_used, &list_free);
 
     /* see if we can merge containers */
-    if((container->prev != NULL) && ((uintptr_t)(container + sizeof(memory_container_t) + sizeof(memory_area_t) + container->area->size) == container->prev->area->address))
+    if ((container->prev != NULL) && ((uintptr_t)(container + sizeof(memory_container_t) + sizeof(memory_area_t) + container->area->size) == container->prev->area->address))
     {
         container->prev->area->address = (uintptr_t)container;
         container->prev->area->size += sizeof(memory_container_t) + sizeof(memory_area_t) + container->area->size;
@@ -204,7 +204,7 @@ void memory_init(multiboot_memory_t *memory, uint32_t length)
         if (memory->type == 1)
         {
             /* skip first 4 KiB */
-            if(memory->address == 0x0000)
+            if (memory->address == 0x0000)
             {
                 memory->address = 0x1000;
             }
@@ -259,19 +259,19 @@ void memory_init(multiboot_memory_t *memory, uint32_t length)
     memory_container_t *next;
 
     /* this monster marks the kernel area as used */
-    while(iterator != NULL)
+    while (iterator != NULL)
     {
         next = iterator->next;
 
         /* whole area is used */
-        if((iterator->area->address >= (uintptr_t)kernel_area_begin) && ((iterator->area->address + iterator->area->size) <= (uintptr_t)kernel_area_end))
+        if ((iterator->area->address >= (uintptr_t)kernel_area_begin) && ((iterator->area->address + iterator->area->size) <= (uintptr_t)kernel_area_end))
         {
             iterator->freeable = false;
 
             memory_move_from_to(iterator, &list_free, &list_used);
         }
         /* beginning of area is used */
-        else if((iterator->area->address >= (uintptr_t)kernel_area_begin) && (iterator->area->address <= (uintptr_t)kernel_area_end))
+        else if ((iterator->area->address >= (uintptr_t)kernel_area_begin) && (iterator->area->address <= (uintptr_t)kernel_area_end))
         {
             /* split and mark as used */
             memory_container_t *container = (memory_container_t *)memory_alloc(sizeof(memory_container_t), 0, 0)->address;
@@ -290,7 +290,7 @@ void memory_init(multiboot_memory_t *memory, uint32_t length)
             memory_move_from_to(container, NULL, &list_used);
         }
         /* end of area is used */
-        else if(((iterator->area->address + iterator->area->size) >= (uintptr_t)kernel_area_begin) && ((iterator->area->address + iterator->area->size) <= (uintptr_t)kernel_area_end))
+        else if (((iterator->area->address + iterator->area->size) >= (uintptr_t)kernel_area_begin) && ((iterator->area->address + iterator->area->size) <= (uintptr_t)kernel_area_end))
         {
             /* split and mark as used */
             memory_container_t *container = (memory_container_t *)memory_alloc(sizeof(memory_container_t), 0, 0)->address;

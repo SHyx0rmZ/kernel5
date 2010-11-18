@@ -223,7 +223,7 @@ void putc(const char c)
     else
     {
         /* scroll lines */
-        if ((uintptr_t)video >= (0xb8000 + (160 * 25)))
+        while ((uintptr_t)video >= (0xb8000 + (160 * 25)))
         {
             memmove((void *)0xb8000, (void *)(0xb8000 + 160), 160 * 24);
             memset((void *)(0xb8000 + (160 * 24)), 0, 160);

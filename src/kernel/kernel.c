@@ -47,7 +47,7 @@ void kernel_entry(multiboot_info_t *info)
     printf("ASXSoft %[Nuke%] - kernel5 - %[build %u%] from %[%s%]\n", 9, 9, __BUILD__, 9, __COMPILED__);
     printf("================================================================================");
 
-    if((info->flags & (1 << 6)) == 0)
+    if ((info->flags & (1 << 6)) == 0)
     {
         printf("%[No memory map supplied!%]", 12);
 
@@ -68,7 +68,10 @@ void kernel_entry(multiboot_info_t *info)
     while (1)
     {
         __asm__ (
-            "hlt \n"
+            "push %0 \n"
+            "push %1 \n"
+            "int $81 \n"
+            "hlt \n" : : "S"((uintarch_t)81), "D"((uintarch_t)0)
         );
     }
 }

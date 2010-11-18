@@ -81,7 +81,6 @@ isr_stub 46
 isr_stub 47
 
 isr_named_stub null, 0xdead
-isr_named_stub system, 81
 
 .global isr_stub_common
 isr_stub_common:
@@ -107,3 +106,25 @@ isr_stub_common:
 
     add $8, %esp
     iret
+
+.global isr_stub_system
+isr_stub_system:
+    xchgl %ebx, 0xc(%esp)
+    popl isr_stub_system_iret + 0x0
+    popl isr_stub_system_iret + 0x4
+    popl isr_stub_system_iret + 0x8
+
+    .extern syscall_table
+    leal syscall_table(,%ebx,4), %ebx
+    call *(%ebx)
+
+    pushl isr_stub_system_iret + 0x8
+    pushl isr_stub_system_iret + 0x4
+    pushl isr_stub_system_iret + 0x0
+    movl 0xc(%esp), %ebx
+    iret
+
+isr_stub_system_iret:
+    .int 0
+    .int 0
+    .int 0

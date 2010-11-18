@@ -24,7 +24,7 @@
 
 cpu_state_t *isr_handler(cpu_state_t *cpu)
 {
-    if(cpu->vector < 0x20)
+    if (cpu->vector < 0x20)
     {
         /* Exception */
         printf("\n%[Encountered exception!%]\nVector: #% 2u", 12, cpu->vector);
@@ -37,10 +37,10 @@ cpu_state_t *isr_handler(cpu_state_t *cpu)
             );
         }
     }
-    else if(cpu->vector < 0x30)
+    else if (cpu->vector < 0x30)
     {
         /* IRQ */
-        printf("\n%[Encountered IRQ!%]\nVector: #% 2u", 12, cpu->vector);
+        /*printf("\n%[Encountered IRQ!%]\nVector: #% 2u", 12, cpu->vector);*/
 
         if(cpu->vector >= 0x28)
         {
@@ -52,6 +52,14 @@ cpu_state_t *isr_handler(cpu_state_t *cpu)
     else
     {
         printf("\nVector: #% 2u", cpu->vector);
+
+        while (1)
+        {
+            __asm__ (
+                "cli \n"
+                "hlt \n"
+            );
+        }
     }
 
     return cpu;

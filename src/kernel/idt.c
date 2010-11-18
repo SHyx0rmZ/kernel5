@@ -73,7 +73,7 @@ void idt_init(void)
     idt_set_entry(47, (uintptr_t)isr_stub_47, 0x08, 0x8e00);
 
     /* install syscall handler */
-    idt_set_entry(81, (uintptr_t)isr_stub_system, 0x08, 0x8e00);
+    idt_set_entry(81, (uintptr_t)isr_stub_system, 0x08, 0xef00);
 }
 
 void idt_load(void)

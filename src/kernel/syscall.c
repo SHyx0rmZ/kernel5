@@ -18,15 +18,17 @@
  *  along with Nuke (理コ込).  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _VERSION_H_
-#define _VERSION_H_
+#include "stdint.h"
+#include "stddef.h"
+#include "console.h"
 
-#define __BUILD__ 406
-#define __COMMIT__ 33
-#define __HEAD__ "c4c75a50ce6fd263b5f411ddc0523e0e0a1756b1"
-#define __BRANCH__ "master"
-#define __CHANGED__ "Wed Nov 17 19:30:28 2010 +0100"
-#define __COMPILED__ "Thu, 18 Nov 2010 07:43:39 +0100"
-#define __TAG__ "理コ込-0.0.0"
+void syscall_test(uintarch_t reserved, uintarch_t number)
+{
+    printf("%[Hello, I am a Syscall and I like the number %u really much!%] Reserved: %x", 9, number, reserved);
+}
 
-#endif
+const uintptr_t syscall_table[] = {
+    (uintptr_t)syscall_test,
+};
+
+const uintptr_t syscall_table_end;
