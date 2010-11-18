@@ -71,6 +71,8 @@ void kernel_entry(multiboot_info_t *info)
             "push %0 \n"
             "push %1 \n"
             "int $81 \n"
+            "pop %1 \n"
+            "pop %0 \n"
             "hlt \n" : : "S"((uintarch_t)81), "D"((uintarch_t)0)
         );
     }
