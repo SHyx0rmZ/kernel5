@@ -19,6 +19,7 @@
  */
 
 #include "gdt.h"
+#include "tss.h"
 
 /* initialize the GDT */
 void gdt_init(void)
@@ -33,4 +34,6 @@ void gdt_init(void)
     gdt_set_entry(3, GDT_BASE_NULL, GDT_LIMIT_FULL, GDT_PRESENT | GDT_RING_3 | GDT_SEGMENT | GDT_EXECUTABLE | GDT_READABLE, GDT_GRANULAR | GDT_PROTECTED_MODE);
     /* 32 bit data, ring 3 */
     gdt_set_entry(4, GDT_BASE_NULL, GDT_LIMIT_FULL, GDT_PRESENT | GDT_RING_3 | GDT_SEGMENT | GDT_WRITABLE | GDT_DIRECTION_UP, GDT_GRANULAR | GDT_PROTECTED_MODE);
+    /* 32 bit tss */
+    gdt_set_entry(5, (uintptr_t)&tss, sizeof(tss_t) - 1, GDT_PRESENT | GDT_RING_0 | GDT_TSS, GDT_NULL);
 }

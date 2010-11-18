@@ -18,13 +18,16 @@
  *  along with Nuke (理コ込).  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _GDT_H_ARCH_
-#define _GDT_H_ARCH_
+#include <string.h>
 
-#include <stdint.h>
+#include "tss.h"
 
-#include "../../gdt.h"
+/* initialize the TSS */
+void tss_init(void)
+{
+    /* clear all fields */
+    memset(&tss, 0, sizeof(tss_t));
 
-#define GDT_MAX_ENTRIES 7
-
-#endif
+    /* mark end of IO-map */
+    tss.io_end = 0xff;
+}

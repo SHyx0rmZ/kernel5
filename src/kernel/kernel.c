@@ -29,6 +29,7 @@
 #include "console.h"
 #include "smp.h"
 #include "pic.h"
+#include "tss.h"
 
 /* the kernels main function, this gets called from boot.S */
 void kernel_entry(multiboot_info_t *info)
@@ -55,6 +56,9 @@ void kernel_entry(multiboot_info_t *info)
     }
 
     memory_init((multiboot_memory_t *)(uintptr_t)info->mmap_addr, info->mmap_length);
+
+    tss_init();
+    tss_load();
 
     smp_init();
 

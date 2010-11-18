@@ -18,13 +18,13 @@
  *  along with Nuke (理コ込).  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _GDT_H_ARCH_
-#define _GDT_H_ARCH_
+#ifndef _TSS_H_
+#define _TSS_H_
 
-#include <stdint.h>
+extern tss_t tss;
 
-#include "../../gdt.h"
-
-#define GDT_MAX_ENTRIES 7
+/* functions */
+void tss_load(void);
+void tss_init(void);
 
 #endif

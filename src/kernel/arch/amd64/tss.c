@@ -18,13 +18,28 @@
  *  along with Nuke (理コ込).  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _GDT_H_ARCH_
-#define _GDT_H_ARCH_
+#include <string.h>
 
-#include <stdint.h>
+#include "tss.h"
+#include "memory.h"
+#include "console.h"
 
-#include "../../gdt.h"
+/* initialize the TSS */
+void tss_init(void)
+{
+    /* clear all fields */
+    memset(&tss, 0, sizeof(tss_t));
 
-#define GDT_MAX_ENTRIES 7
+    /* get stack space for IST7 */
+    memory_area_t *stack = memory_alloc(0x1000, 0x200000 , 0);
 
-#endif
+    tss.ist7 = stack->address + stack->size;
+
+    /* get stack space for IST0 */
+    stack = memory_alloc(0x1000, 0x200000, 0);
+
+    tss.ist1 = stack->address + stack->size;
+
+    /* mark end of IO-map */
+    tss.io_end = 0xff;
+}

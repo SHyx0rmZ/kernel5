@@ -52,6 +52,7 @@ typedef struct
 #define GDT_RING_2          0x40
 #define GDT_RING_1          0x20
 #define GDT_RING_0          0x00
+#define GDT_TSS             0x09
 #define GDT_SEGMENT         0x10
 #define GDT_EXECUTABLE      0x08
 #define GDT_DIRECTION_DOWN  0x04
@@ -60,6 +61,7 @@ typedef struct
 #define GDT_READABLE        0x02
 #define GDT_WRITABLE        0x02
 #define GDT_ACCESSED        0x01
+#define GDT_NULL            0x00
 
 #define GDT_GRANULAR        0x08
 #define GDT_PROTECTED_MODE  0x04
