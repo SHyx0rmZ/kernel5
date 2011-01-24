@@ -27,4 +27,9 @@
 #define NULL 0
 #endif
 
+/* these are necessary for syscalls */
+#define SYSCALL uintarch_t reserved __attribute__((unused))
+#define EMPTY 0
+#define CALL_AS_NON_SYSCALL EMPTY
+
 #endif

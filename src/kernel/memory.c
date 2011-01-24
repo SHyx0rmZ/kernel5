@@ -54,7 +54,7 @@ void memory_move_from_to(memory_container_t *container, memory_container_t **fro
 
     memory_container_t *iterator = *to;
 
-    /* move to right position */
+    /* move to correct position */
     while ((iterator != NULL) && (iterator->next != NULL) && (iterator->area->address > container->area->address))
     {
         iterator = iterator->next;
@@ -77,7 +77,7 @@ void memory_move_from_to(memory_container_t *container, memory_container_t **fro
 }
 
 /* FIXME: this will return invalid values if align is not a power of 2 or 0 */
-memory_area_t *memory_alloc(size_t size, uintptr_t limit, uintptr_t align)
+memory_area_t *memory_alloc(SYSCALL, size_t size, uintptr_t limit, uintptr_t align)
 {
     memory_container_t *container = list_free;
 
@@ -121,6 +121,7 @@ memory_area_t *memory_alloc(size_t size, uintptr_t limit, uintptr_t align)
 
             selected->area->address = container->area->address + sizeof(memory_container_t) + sizeof(memory_area_t);
             selected->area->size = size;
+            selected->freeable = true;
 
             selected->prev = container->prev;
             selected->next = container;
@@ -146,7 +147,7 @@ memory_area_t *memory_alloc(size_t size, uintptr_t limit, uintptr_t align)
     return selected->area;
 }
 
-void memory_free(memory_area_t *area)
+void memory_free(SYSCALL, memory_area_t *area)
 {
     memory_container_t *container = list_used;
 
@@ -224,8 +225,8 @@ void memory_init(multiboot_memory_t *memory, uint32_t length)
         }
         else
         {
-            container = (memory_container_t *)memory_alloc(sizeof(memory_container_t), 0, 0)->address;
-            area = (memory_area_t *)memory_alloc(sizeof(memory_area_t), 0, 0)->address;
+            container = (memory_container_t *)memory_alloc(CALL_AS_NON_SYSCALL, sizeof(memory_container_t), 0, 0)->address;
+            area = (memory_area_t *)memory_alloc(CALL_AS_NON_SYSCALL, sizeof(memory_area_t), 0, 0)->address;
 
             /* can't allocate memory structures */
             if ((container == NULL) || (area == NULL))
@@ -274,8 +275,8 @@ void memory_init(multiboot_memory_t *memory, uint32_t length)
         else if ((iterator->area->address >= (uintptr_t)kernel_area_begin) && (iterator->area->address <= (uintptr_t)kernel_area_end))
         {
             /* split and mark as used */
-            memory_container_t *container = (memory_container_t *)memory_alloc(sizeof(memory_container_t), 0, 0)->address;
-            memory_area_t *area = (memory_area_t *)memory_alloc(sizeof(memory_area_t), 0, 0)->address;
+            memory_container_t *container = (memory_container_t *)memory_alloc(CALL_AS_NON_SYSCALL, sizeof(memory_container_t), 0, 0)->address;
+            memory_area_t *area = (memory_area_t *)memory_alloc(CALL_AS_NON_SYSCALL, sizeof(memory_area_t), 0, 0)->address;
 
             container->area = area;
             container->freeable = false;
@@ -293,8 +294,8 @@ void memory_init(multiboot_memory_t *memory, uint32_t length)
         else if (((iterator->area->address + iterator->area->size) >= (uintptr_t)kernel_area_begin) && ((iterator->area->address + iterator->area->size) <= (uintptr_t)kernel_area_end))
         {
             /* split and mark as used */
-            memory_container_t *container = (memory_container_t *)memory_alloc(sizeof(memory_container_t), 0, 0)->address;
-            memory_area_t *area = (memory_area_t *)memory_alloc(sizeof(memory_area_t), 0, 0)->address;
+            memory_container_t *container = (memory_container_t *)memory_alloc(CALL_AS_NON_SYSCALL, sizeof(memory_container_t), 0, 0)->address;
+            memory_area_t *area = (memory_area_t *)memory_alloc(CALL_AS_NON_SYSCALL, sizeof(memory_area_t), 0, 0)->address;
 
             container->area = area;
             container->freeable = false;

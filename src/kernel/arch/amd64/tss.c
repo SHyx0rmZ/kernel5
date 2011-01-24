@@ -31,12 +31,12 @@ void tss_init(void)
     memset(&tss, 0, sizeof(tss_t));
 
     /* get stack space for IST7 */
-    memory_area_t *stack = memory_alloc(0x1000, 0x200000 , 0);
+    memory_area_t *stack = memory_alloc(CALL_AS_NON_SYSCALL, 0x1000, 0x200000 , 0);
 
     tss.ist7 = stack->address + stack->size;
 
     /* get stack space for IST0 */
-    stack = memory_alloc(0x1000, 0x200000, 0);
+    stack = memory_alloc(CALL_AS_NON_SYSCALL, 0x1000, 0x200000, 0);
 
     tss.ist1 = stack->address + stack->size;
 

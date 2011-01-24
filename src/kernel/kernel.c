@@ -25,11 +25,12 @@
 #include "gdt.h"
 #include "idt.h"
 #include "multiboot.h"
-#include "memory.h"
 #include "console.h"
 #include "smp.h"
 #include "pic.h"
 #include "tss.h"
+#include "syscalls.h"
+#include "memory.h"
 
 /* the kernels main function, this gets called from boot.S */
 void kernel_entry(multiboot_info_t *info)
@@ -64,6 +65,21 @@ void kernel_entry(multiboot_info_t *info)
 
     printf("%[Kernel up and running...%]", 10);
 
+    memory_area_t *memory = syscall_memory_alloc(0x8000, 0, 0x000000);
+
+    if (memory == NULL)
+    {
+        printf("\n%[memory%] is NULL", 14);
+    }
+    else
+    {
+        printf("\n%[memory%] is %u bytes at %x", 14, memory->size, memory->address);
+    }
+
+    syscall_memory_free(memory);
+
+    printf("\n%[memory%] size after %[syscall_memory_free()%] is %u", 14, 10, memory->size);
+
     __asm__ (
         "sti \n"
     );
@@ -72,12 +88,7 @@ void kernel_entry(multiboot_info_t *info)
     while (1)
     {
         __asm__ (
-            "push %0 \n"
-            "push %1 \n"
-            "int $81 \n"
-            "pop %1 \n"
-            "pop %0 \n"
-            "hlt \n" : : "S"((uintarch_t)81), "D"((uintarch_t)0)
+            "hlt \n"
         );
     }
 }

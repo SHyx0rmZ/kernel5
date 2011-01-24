@@ -21,14 +21,57 @@
 #include "stdint.h"
 #include "stddef.h"
 #include "console.h"
+#include "memory.h"
 
-void syscall_test(uintarch_t reserved, uintarch_t number)
+void syscall_invalid()
 {
-    printf("%[Hello, I am a Syscall and I like the number %u really much!%] Reserved: %x", 9, number, reserved);
+    printf("\n%[Invalid syscall! System halted!%]", 12);
+
+    while (1)
+    {
+        __asm__ (
+            "cli \n"
+            "hlt \n"
+        );
+    }
+}
+
+memory_area_t *syscall_memory_alloc(size_t size, uintptr_t limit, uintptr_t align)
+{
+    memory_area_t *result = NULL;
+
+    __asm__ (
+            "push %1 \n"
+            "push %2 \n"
+            "push %3 \n"
+            "push %4 \n"
+            "int $81 \n"
+            "pop %4 \n"
+            "pop %3 \n"
+            "pop %2 \n"
+            "pop %1 \n"
+            : "=a"(result) : "c"(align), "d"(limit), "S"(size), "D"((uintarch_t)1)
+    );
+
+    return result;
+}
+
+void syscall_memory_free(memory_area_t *area)
+{
+    __asm__ (
+            "push %0 \n"
+            "push %1 \n"
+            "int $81 \n"
+            "pop %1 \n"
+            "pop %0 \n"
+            : : "S"(area), "D"((uintarch_t)2)
+    );
 }
 
 const uintptr_t syscall_table[] = {
-    (uintptr_t)syscall_test,
+    (uintptr_t)syscall_invalid,
+    (uintptr_t)memory_alloc,
+    (uintptr_t)memory_free,
 };
 
 const uintptr_t syscall_table_end;

@@ -129,7 +129,18 @@ isr_stub_system:
 
     .extern syscall_table
     leaq syscall_table(,%rdi,8), %rbx
+
+    .extern syscall_table_end
+    cmpq $syscall_table_end, %rbx
+    jae isr_invalid_system
+
+isr_do_system:
     call *(%rbx)
 
     popq %rbx
     iretq
+
+isr_invalid_system:
+    .extern syscall_invalid
+    movq $syscall_invalid, %rbx
+    jmp isr_do_system

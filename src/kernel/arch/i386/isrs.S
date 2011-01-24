@@ -116,6 +116,12 @@ isr_stub_system:
 
     .extern syscall_table
     leal syscall_table(,%ebx,4), %ebx
+
+    .extern syscall_table_end
+    cmpl $syscall_table_end, %ebx
+    jae isr_invalid_system
+
+isr_do_system:
     call *(%ebx)
 
     pushl isr_stub_system_iret + 0x8
@@ -128,3 +134,8 @@ isr_stub_system_iret:
     .int 0
     .int 0
     .int 0
+
+isr_invalid_system:
+    .extern syscall_invalid
+    movl $syscall_invalid, %ebx
+    jmp isr_do_system

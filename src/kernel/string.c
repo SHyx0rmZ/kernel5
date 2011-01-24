@@ -34,6 +34,11 @@ void *memset(void *s, int c, size_t n)
 
 void *memcpy(void *dest, void *src, size_t n)
 {
+    if (dest == src)
+    {
+        return dest;
+    }
+
     char *xd = dest;
     const char *xs = src;
 
@@ -47,6 +52,11 @@ void *memcpy(void *dest, void *src, size_t n)
 
 void *memmove(void *dest, void *src, size_t n)
 {
+    if (dest == src)
+    {
+        return dest;
+    }
+
     char *xd;
     const char *xs;
 
