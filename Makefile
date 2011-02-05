@@ -49,7 +49,7 @@ ARCHFLAGS_I386 = -m32
 ARCH_AMD64 = amd64
 ARCH_I386 = i386
 
-.PHONY: all amd64 i386 i386-extract clean clean-for-real clean-deep clean-deep-for-real image-begin image-entry image-end version dirs tools
+.PHONY: all amd64 i386 i386-extract clean clean-for-real clean-deep clean-deep-for-real image-begin image-entry image-end version dirs tools test
 
 all: dirs clean-deep tools
 	@echo '-------- Building ASXSoft Nuke - Operating System - kernel5 - Codename: 理コ込'
@@ -156,3 +156,6 @@ dirs:
 	@mkdir -p $(DIR_OBJ)
 	@mkdir -p $(DIR_RES)
 	@mkdir -p $(DIR_EXT)
+
+test:
+	@bochs -f kernel5.cfg -q
