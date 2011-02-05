@@ -20,6 +20,7 @@
 
 #include <stdbool.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <string.h>
 
 #include "console.h"
@@ -283,6 +284,7 @@ int printf(const char *format, ...)
 
             uintmax_t width = 0;
             char pad = ' ';
+            char pad_mod = 0;
             uintmax_t precision = 0; /* int */
             bool alternate = false;
             uint8_t sign = 0;
@@ -300,6 +302,7 @@ int printf(const char *format, ...)
             {
                 pad = '0';
 
+                pad_mod++;
                 format++;
             }
 
@@ -308,6 +311,7 @@ int printf(const char *format, ...)
             {
                 sign = 4;
 
+                pad_mod++;
                 format++;
             }
 
@@ -457,17 +461,46 @@ int printf(const char *format, ...)
 
                 format++;
             }
+            /* unsigned char */
+            else if (*format == 'c')
+            {
+                unsigned char arg = va_arg(args, int);
+
+                putc(arg);
+
+                format++;
+            }
             /* void * */
             else if (*format == 'p')
             {
                 void *arg = va_arg(args, void *);
 
-                /* convert number */
-                convert_number((uintmax_t)(uintptr_t)arg, 16, pad, width, precision, false, sign);
+                /* handle NULL */
+                if (arg == NULL)
+                {
+                    puts("(nil)");
+                }
+                else
+                {
+                    /* use default formatting for %p */
+                    puts("0x");
 
-                /* and print it */
-                puts(converted);
+                    if (width == 0)
+                    {
+                        width = 2 * sizeof(void *);
+                    }
 
+                    if (pad_mod == 0)
+                    {
+                        pad = '0';
+                    }
+
+                    /* convert number */
+                    convert_number((uintmax_t)(uintptr_t)arg, 16, pad, width, precision, false, sign);
+
+                    /* and print it */
+                    puts(converted);
+                }
 
                 format++;
             }
