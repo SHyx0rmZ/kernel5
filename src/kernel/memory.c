@@ -195,7 +195,7 @@ void memory_free(SYSCALL, memory_area_t *area)
 
 void memory_init(multiboot_memory_t *memory, uint32_t length)
 {
-    multiboot_memory_t *memory_end = memory + length;
+    multiboot_memory_t *memory_end = (multiboot_memory_t *)((uintptr_t)memory + (uintptr_t)length);
 
     while (memory < memory_end)
     {
@@ -248,7 +248,7 @@ void memory_init(multiboot_memory_t *memory, uint32_t length)
             container->next = container;
             container->prev = container;
             area->address = memory->address;
-            area->size = memory->size;
+            area->size = memory->length;
 
             memory_move_from_to(container, NULL, &list_used);
         }
