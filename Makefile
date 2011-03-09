@@ -49,7 +49,7 @@ ARCHFLAGS_I386 = -m32
 ARCH_AMD64 = amd64
 ARCH_I386 = i386
 
-.PHONY: all amd64 i386 i386-extract clean clean-for-real clean-deep clean-deep-for-real image-begin image-entry image-end version dirs tools test
+.PHONY: all amd64 i386 i386-extract clean clean-for-real clean-deep clean-deep-for-real image-begin image-entry image-end version dirs tools test todo fixme lines
 
 all: dirs clean-deep tools
 	@echo '-------- Building ASXSoft Nuke - Operating System - kernel5 - Codename: 理コ込'
@@ -159,3 +159,12 @@ dirs:
 
 test:
 	@bochs -f kernel5.cfg -q
+
+todo:
+	@find src inc -type f -iregex "^.*\.\(c\|h\|S\)" -exec grep -Hn TODO \{\} \; 2> /dev/null
+
+fixme:
+	@find src inc -type f -iregex "^.*\.\(c\|h\|S\)" -exec grep -Hn FIXME \{\} \; 2> /dev/null
+
+lines:
+	@find src inc -type f -iregex "^.*\.\(c\|h\|S\)" | xargs wc | tail -n 1 2> /dev/null

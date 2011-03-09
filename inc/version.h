@@ -21,12 +21,12 @@
 #ifndef _VERSION_H_
 #define _VERSION_H_
 
-#define __BUILD__ 558
-#define __COMMIT__ 41
-#define __HEAD__ "30cd702c252d38e5707b61e60e0587e6b96053df"
+#define __BUILD__ 566
+#define __COMMIT__ 42
+#define __HEAD__ "4b98a2fbe00b75779ff9d4b61404490e253f0361"
 #define __BRANCH__ "master"
-#define __CHANGED__ "Sat Feb 5 20:58:58 2011 +0100"
-#define __COMPILED__ "Wed, 16 Feb 2011 08:06:35 +0100"
+#define __CHANGED__ "Wed Feb 16 08:08:41 2011 +0100"
+#define __COMPILED__ "Fri, 04 Mar 2011 10:10:53 +0100"
 #define __TAG__ "理コ込-0.0.1"
 
 #endif
