@@ -86,6 +86,8 @@ void smp_init(void)
 
     if (config->signature != 0x504d4350)
     {
+        printf("SMP SIGNATURE INVALID");
+
         while(1);
     }
 
@@ -99,7 +101,7 @@ void smp_init(void)
         {
             smp_config_processor_t *cpu = (smp_config_processor_t *)iterator;
 
-            if (cpu->flags & 1)
+            if (cpu->flags & SMP_FLAG_ACTIVE)
             {
                 printf("CPU #%hu %[enabled%]\n", entries, 10);
             }
@@ -108,21 +110,58 @@ void smp_init(void)
                 printf("CPU #%hu %[disabled%]\n", entries, 12);
             }
 
+            if (cpu->flags & SMP_FLAG_BOOT)
+            {
+                printf("Bootprocessor properties:\n");
+                printf("APIC ID      : %03hhu\n", cpu->local_apic_id);
+                printf("APIC Version : %03hhu\n", cpu->local_apic_version);
+                printf("Feature flags: %#0.8x\n", cpu->feature_flags);
+                printf("Local APIC   : %#0p\n", config->local_apic);
+            }
+
             cpu++;
             cpus++;
 
             iterator = (smp_config_entry_t *)cpu;
         }
-        else if (iterator->entry_type < 5)
+        else if (iterator->entry_type == 1)
         {
+            smp_config_bus_t *bus = (smp_config_bus_t *)iterator;
+
+            printf("Bus #%03hhu is %c%c%c%c%c%c\n", bus->id, bus->type[0], bus->type[1], bus->type[2], bus->type[3], bus->type[4], bus->type[5]);
+
+            iterator++;
+        }
+        else if (iterator->entry_type == 2)
+        {
+            smp_config_io_apic_t *io = (smp_config_io_apic_t *)iterator;
+
+            printf("IO APIC #%03hhu (Version %03hhu) with flags %#0.2hhx located at %p\n", io->id, io->version, io->flags, io->address);
+
+            iterator++;
+        }
+        else if (iterator->entry_type == 3)
+        {
+            smp_config_io_assignment_t *assign = (smp_config_io_assignment_t *)iterator;
+
+            printf("IO Assignment of Type '%s' with flag %#0.4hx from %03hhu->%03hhu to %03hhu->%03hhu\n", (assign->type & 2 ? (assign->type & 1 ? "ExtINT" : "SMI") : (assign->type & 1) ? "NMI" : "INT"), assign->flag, assign->src_id, assign->src_irq, assign->dest_id, assign->dest_int);
+
+            iterator++;
+        }
+        else if (iterator->entry_type == 4)
+        {
+            smp_config_local_assignment_t *assign = (smp_config_local_assignment_t *)iterator;
+
+            printf("Local Assignment of Type '%s' with flag %#0.4hx from %03hhu->%03hhu to %03hhu->%03hhu\n", (assign->type & 2 ? (assign->type & 1 ? "ExtINT" : "SMI") : (assign->type & 1) ? "NMI" : "INT"), assign->flag, assign->src_id, assign->src_irq, assign->dest_id, assign->dest_int);
+
             iterator++;
         }
         else
         {
+            printf("%[%u%]\n", 12, iterator->entry_type);
             while (1);
         } 
     }
 
     printf("%[%hu%] cpu%s found\n", 9, cpus, ((cpus == 1) ? "" : "s"));
-
 }

@@ -65,10 +65,51 @@ typedef struct smp_config_processor
     uint32_t feature_reserved[2];
 } __attribute__((packed)) smp_config_processor_t;
 
+typedef struct smp_config_bus
+{
+    uint8_t entry_type;
+    uint8_t id;
+    uint8_t type[6];
+} __attribute__((packed)) smp_config_bus_t;
+
+typedef struct smp_config_io_apic
+{
+    uint8_t entry_type;
+    uint8_t id;
+    uint8_t version;
+    uint8_t flags;
+    uint32_t address;
+} __attribute__((packed)) smp_config_io_apic_t;
+
+typedef struct smp_config_io_assignment
+{
+    uint8_t entry_type;
+    uint8_t type;
+    uint16_t flag;
+    uint8_t src_id;
+    uint8_t src_irq;
+    uint8_t dest_id;
+    uint8_t dest_int;
+} __attribute__((packed)) smp_config_io_assignment_t;
+
+typedef struct smp_config_local_assignment
+{
+    uint8_t entry_type;
+    uint8_t type;
+    uint16_t flag;
+    uint8_t src_id;
+    uint8_t src_irq;
+    uint8_t dest_id;
+    uint8_t dest_int;
+} __attribute__((packed)) smp_config_local_assignment_t;
+
 typedef struct smp_config_entry
 {
     uint8_t entry_type;
     uint8_t reserved[7];
 } __attribute__((packed)) smp_config_entry_t;
+
+#define SMP_FLAG_ACTIVE 1
+#define SMP_FLAG_BOOT   2
 
 #endif
