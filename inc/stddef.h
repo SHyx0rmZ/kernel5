@@ -32,4 +32,15 @@
 #define EMPTY 0
 #define CALL_AS_NON_SYSCALL EMPTY
 
+/* these are for optimizations */
+#define LIKELY(x) __builtin_expect((x), 1)
+#define UNLIKELY(x) __builtin_expect((x), 0)
+
+/* shortcuts */
+#ifdef __LP64__
+#define ARCHDEP(x,y) ((x))
+#else
+#define ARCHDEP(x,y) ((y))
+#endif
+
 #endif
