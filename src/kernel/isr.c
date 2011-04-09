@@ -18,18 +18,29 @@
  *  along with Nuke (理コ込).  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stddef.h>
+
 #include "state.h"
 #include "console.h"
 #include "io.h"
 
 cpu_state_t *isr_handler(cpu_state_t *cpu)
 {
-    if (cpu->vector < 0x20)
+    if (UNLIKELY(cpu->vector < 0x20))
     {
         /* Exception */
-        printf("\n%[Encountered exception!%]\nVector: #% 2u", 12, cpu->vector);
+        printf("\n%[Encountered exception!%]\nVector: #% 2u, Errorcode: %p\n" ARCHDEP("R", "E") "IP: %p ", 12, cpu->vector, cpu->errorcode, ARCHDEP(cpu->rip, cpu->eip));
 
-        while(1)
+        if (LIKELY(cpu->vector == 14))
+        {
+            uintptr_t cr2;
+
+            __asm__ ("mov %%cr2, %0" : "=a" (cr2));
+
+            printf("CR2: %p", cr2);
+        }
+
+        while (1)
         {
             __asm__ (
                 "cli \n"
@@ -37,12 +48,12 @@ cpu_state_t *isr_handler(cpu_state_t *cpu)
             );
         }
     }
-    else if (cpu->vector < 0x30)
+    else if (LIKELY(cpu->vector < 0x30))
     {
         /* IRQ */
         /*printf("\n%[Encountered IRQ!%]\nVector: #% 2u", 12, cpu->vector);*/
 
-        if(cpu->vector >= 0x28)
+        if(UNLIKELY(cpu->vector >= 0x28))
         {
             outb(0xA0, 0x20);
         }

@@ -18,6 +18,8 @@
  *  along with Nuke (理コ込).  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stddef.h>
+
 #include "idt.h"
 #include "isrs.h"
 
@@ -30,7 +32,7 @@ void idt_init(void)
     uint16_t i;
 
     /* install dummy handlers */
-    for(i = 0; i < IDT_MAX_ENTRIES; i++)
+    for(i = 0; LIKELY(i < IDT_MAX_ENTRIES); i++)
     {
         idt_set_entry(i, (uintptr_t)isr_stub_null, 0x08, 0x8e01);
     }

@@ -43,7 +43,7 @@ ASM = gcc
 SH = bash
 
 LDFLAGS= -n
-CFLAGS = -g -Wall -Wextra -Werror -std=gnu99 -ffreestanding -nostdlib -nostartfiles -nodefaultlibs -fno-leading-underscore -O0 -ansi
+CFLAGS = -g -g3 -Wall -Wextra -Werror -std=gnu99 -ffreestanding -nostdlib -nostartfiles -nodefaultlibs -fno-leading-underscore -O0 -ansi
 ARCHFLAGS_AMD64 = -m64
 ARCHFLAGS_I386 = -m32
 ARCH_AMD64 = amd64
