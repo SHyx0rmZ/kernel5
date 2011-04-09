@@ -69,16 +69,16 @@ void kernel_entry(multiboot_info_t *info)
 
     if (memory == NULL)
     {
-        printf("\n%[memory%] is NULL", 14);
+        printf("%[memory%] is NULL\n", 14);
     }
     else
     {
-        printf("\n%[memory%] is %u bytes at %x", 14, memory->size, memory->address);
+        printf("%[memory%] is %u bytes at %p\n", 14, memory->size, memory->address);
     }
 
     syscall_memory_free(memory);
 
-    printf("\n%[memory%] size after %[syscall_memory_free()%] is %u", 14, 10, memory->size);
+    printf("%[memory%] size after %[syscall_memory_free()%] is %u", 14, 10, memory->size);
 
     __asm__ (
         "sti \n"
