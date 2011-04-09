@@ -22,6 +22,7 @@
 #include "stddef.h"
 #include "console.h"
 #include "memory.h"
+#include "syscalls.h"
 
 void syscall_invalid()
 {
@@ -36,35 +37,17 @@ void syscall_invalid()
     }
 }
 
-memory_area_t *syscall_memory_alloc(size_t size, uintptr_t limit, uintptr_t align)
-{
-    memory_area_t *result = NULL;
-
-    __asm__ (
-            "push %1 \n"
-            "push %2 \n"
-            "push %3 \n"
-            "push %4 \n"
-            "int $81 \n"
-            "pop %4 \n"
-            "pop %3 \n"
-            "pop %2 \n"
-            "pop %1 \n"
-            : "=a"(result) : "c"(align), "d"(limit), "S"(size), "D"((uintarch_t)1)
-    );
-
-    return result;
-}
-
-void syscall_memory_free(memory_area_t *area)
+void syscall_memory_free(memory_area_t area)
 {
     __asm__ (
             "push %0 \n"
             "push %1 \n"
+            "push %2 \n"
             "int $81 \n"
+            "pop %2 \n"
             "pop %1 \n"
             "pop %0 \n"
-            : : "S"(area), "D"((uintarch_t)2)
+            : : "d"(area.size), "S"(area.address), "D"((uintarch_t)2)
     );
 }
 

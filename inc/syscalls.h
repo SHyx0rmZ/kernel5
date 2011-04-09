@@ -23,7 +23,7 @@
 
 #include "memory.h"
 
-extern memory_area_t *syscall_memory_alloc(size_t size, uintptr_t limit, uintptr_t align);
-extern void syscall_memory_free(memory_area_t *area);
+extern memory_area_t syscall_memory_alloc(size_t size, uintptr_t limit, uintptr_t align);
+extern void syscall_memory_free(memory_area_t area);
 
 #endif

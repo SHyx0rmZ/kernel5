@@ -263,7 +263,7 @@ memory_container_t *memory_split(memory_container_t *container, uintptr_t addres
     return NULL;
 }
 
-memory_area_t *memory_alloc(SYSCALL, size_t size, uintptr_t limit, uintptr_t align)
+memory_area_t memory_alloc(SYSCALL, size_t size, uintptr_t limit, uintptr_t align)
 {
     memory_container_t *container = list_free;
 
@@ -287,14 +287,14 @@ memory_area_t *memory_alloc(SYSCALL, size_t size, uintptr_t limit, uintptr_t ali
 
         if (UNLIKELY(container == NULL))
         {
-            return NULL;
+            return (memory_area_t){ .address = (uintptr_t)NULL, .size = 0 };
         }
 
         memory_container_t *selected = memory_split(container, container->area->address, size);
 
         memory_move_from_to(selected, &list_free, &list_used);
 
-        return selected->area;
+        return (memory_area_t){ .address = selected->area->address, .size = selected->area->size };
     }
     else
     {
@@ -328,7 +328,7 @@ memory_area_t *memory_alloc(SYSCALL, size_t size, uintptr_t limit, uintptr_t ali
                     {
                         memory_move_from_to(container, &list_free, &list_used);
 
-                        return container->area;
+                        return (memory_area_t){ .address = container->area->address, .size = container->area->size };
                     }
                 }
                 else if (LIKELY(container->area->size > size))
@@ -342,7 +342,7 @@ memory_area_t *memory_alloc(SYSCALL, size_t size, uintptr_t limit, uintptr_t ali
 
                             memory_move_from_to(selected, &list_free, &list_used);
 
-                            return selected->area;
+                            return (memory_area_t){ .address = selected->area->address, .size = selected->area->size };
                         }
                     }
                     /* neither end of the requested area is located on an edge of the free area: split twice */
@@ -354,12 +354,12 @@ memory_area_t *memory_alloc(SYSCALL, size_t size, uintptr_t limit, uintptr_t ali
 
                             if (UNLIKELY(selected != memory_split(selected, aligned_address, size)))
                             {
-                                return NULL;
+                                return (memory_area_t){ .address = (uintptr_t)NULL, .size = 0 };
                             }
 
                             memory_move_from_to(selected, &list_free, &list_used);
 
-                            return selected->area;
+                            return (memory_area_t){ .address = selected->area->address, .size = selected->area->size };
                         }
                     }
                 }
@@ -370,21 +370,21 @@ memory_area_t *memory_alloc(SYSCALL, size_t size, uintptr_t limit, uintptr_t ali
 
         if (UNLIKELY(container == NULL))
         {
-            return NULL;
+            return (memory_area_t){ .address = (uintptr_t)NULL, .size = 0 };
         }
     }
 
-    return NULL;
+    return (memory_area_t){ .address = (uintptr_t)NULL, .size = 0 };
 }
 
-void memory_free(SYSCALL, memory_area_t *area)
+void memory_free(SYSCALL, memory_area_t area)
 {
     memory_container_t *container = list_used;
 
     /* search for allocated area */
     while (LIKELY(container != NULL))
     {
-        if ((UNLIKELY(container->area->address == area->address)) && (LIKELY(container->area->size == area->size)))
+        if ((UNLIKELY(container->area->address == area.address)) && (LIKELY(container->area->size == area.size)))
         {
             break;
         }
@@ -433,6 +433,13 @@ void memory_free(SYSCALL, memory_area_t *area)
         {
             container->prev->prev->next = container;
         }
+        else
+        {
+            if (container->prev == list_free)
+            {
+                list_free = container;
+            }
+        }
 
         container->prev = container->prev->prev;
     }
@@ -440,10 +447,10 @@ void memory_free(SYSCALL, memory_area_t *area)
 
 void memory_init(multiboot_memory_t *memory, uint32_t length)
 {
-    void memory_check_area(memory_area_t *area)
+    void memory_check_area(memory_area_t area)
     {
         /* can't allocate memory structures */
-        if (UNLIKELY(area == NULL))
+        if (UNLIKELY(area.size == 0))
         {
             printf("%[No memory available!%]", 12);
 
@@ -491,12 +498,12 @@ void memory_init(multiboot_memory_t *memory, uint32_t length)
                 if (UNLIKELY((memory->address + memory->length) > (uintptr_t)kernel_area_end))
                 {
                     /* second memory block begins at kernel's end */
-                    area = (memory_area_t *)memory_alloc(CALL_AS_NON_SYSCALL, MEMORY_OVERHEAD, 0, 0);
+                    memory_area_t alloc = memory_alloc(CALL_AS_NON_SYSCALL, MEMORY_OVERHEAD, 0, 0);
 
-                    memory_check_area(area);
+                    memory_check_area(alloc);
 
-                    container = (memory_container_t *)area->address;
-                    area = (memory_area_t *)(area->address + sizeof(memory_container_t));
+                    container = (memory_container_t *)alloc.address;
+                    area = (memory_area_t *)(alloc.address + sizeof(memory_container_t));
 
                     container->area = area;
                     container->next = NULL;
@@ -553,12 +560,12 @@ void memory_init(multiboot_memory_t *memory, uint32_t length)
         }
         else
         {
-            area = (memory_area_t *)memory_alloc(CALL_AS_NON_SYSCALL, MEMORY_OVERHEAD, 0, 0);
+            memory_area_t alloc = memory_alloc(CALL_AS_NON_SYSCALL, MEMORY_OVERHEAD, 0, 0);
 
-            memory_check_area(area);
+            memory_check_area(alloc);
 
-            container = (memory_container_t *)area->address;
-            area = (memory_area_t *)(area->address + sizeof(memory_container_t));
+            container = (memory_container_t *)alloc.address;
+            area = (memory_area_t *)(alloc.address + sizeof(memory_container_t));
 
             /* add memory to used list */
             container->area = area;
@@ -575,12 +582,12 @@ void memory_init(multiboot_memory_t *memory, uint32_t length)
     }
 
     /* add used memory block for kernel's position in RAM */
-    area = (memory_area_t *)memory_alloc(CALL_AS_NON_SYSCALL, MEMORY_OVERHEAD, 0, 0);
+    memory_area_t alloc = memory_alloc(CALL_AS_NON_SYSCALL, MEMORY_OVERHEAD, 0, 0);
 
-    memory_check_area(area);
+    memory_check_area(alloc);
 
-    container = (memory_container_t *)area->address;
-    area = (memory_area_t *)(area->address + sizeof(memory_container_t));
+    container = (memory_container_t *)alloc.address;
+    area = (memory_area_t *)(alloc.address + sizeof(memory_container_t));
 
     container->area = area;
     container->freeable = false;
@@ -623,12 +630,12 @@ void memory_init(multiboot_memory_t *memory, uint32_t length)
                     if ((free->area->address + free->area->size) > (used->area->address + used->area->size))
                     {
                         /* second free memory block begins at used memory block's end */
-                        area = (memory_area_t *)memory_alloc(CALL_AS_NON_SYSCALL, MEMORY_OVERHEAD, 0, 0);
+                        memory_area_t alloc = memory_alloc(CALL_AS_NON_SYSCALL, MEMORY_OVERHEAD, 0, 0);
 
-                        memory_check_area(area);
+                        memory_check_area(alloc);
 
-                        container = (memory_container_t *)area->address;
-                        area = (memory_area_t *)(area->address + sizeof(memory_container_t));
+                        container = (memory_container_t *)alloc.address;
+                        area = (memory_area_t *)(alloc.address + sizeof(memory_container_t));
 
                         container->area = area;
                         container->next = NULL;

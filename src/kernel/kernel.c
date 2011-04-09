@@ -63,22 +63,22 @@ void kernel_entry(multiboot_info_t *info)
 
     smp_init();
 
-    printf("%[Kernel up and running...%]", 10);
+    printf("%[Kernel up and running...%]\n", 10);
 
-    memory_area_t *memory = syscall_memory_alloc(0x8000, 0, 0x000000);
+    memory_area_t memory = syscall_memory_alloc(0x8000, 0, 0x000000);
 
-    if (memory == NULL)
+    if (memory.size == 0)
     {
-        printf("%[memory%] is NULL\n", 14);
+        printf("%[memory%] is (nil) - (nil)\n", 14);
     }
     else
     {
-        printf("%[memory%] is %u bytes at %p\n", 14, memory->size, memory->address);
+        printf("%[memory%] is %p - %p\n", 14, memory.address, memory.address + memory.size);
     }
 
     syscall_memory_free(memory);
 
-    printf("%[memory%] size after %[syscall_memory_free()%] is %u", 14, 10, memory->size);
+    printf("%[memory%] freed via %[syscall_memory_free()%]\n", 14, 10, memory.size);
 
     __asm__ (
         "sti \n"

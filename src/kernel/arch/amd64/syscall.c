@@ -18,23 +18,19 @@
  *  along with Nuke (理コ込).  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _MEMORY_H_
-#define _MEMORY_H_
+#include "stdint.h"
+#include "stddef.h"
+#include "memory.h"
+#include "syscalls.h"
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
-
-#include "multiboot.h"
-
-typedef struct memory_area
+memory_area_t syscall_memory_alloc(size_t size, uintptr_t limit, uintptr_t align)
 {
-    uintptr_t address;
-    size_t size;
-} memory_area_t;
+    memory_area_t result;
 
-memory_area_t memory_alloc(SYSCALL, size_t size, uintptr_t limit, uintptr_t align);
-void memory_free(SYSCALL, memory_area_t area);
-void memory_init(multiboot_memory_t *memory, uint32_t length);
+    __asm__ (
+            "int $81 \n"
+            : "=a"(result.address), "=d"(result.size) : "c"(align), "d"(limit), "S"(size), "D"((uintarch_t)1)
+    );
 
-#endif
+    return result;
+}
