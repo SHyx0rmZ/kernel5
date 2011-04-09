@@ -32,7 +32,7 @@ static char converted[256];
 static char intermediate[256];
 
 /* convert a number to a string, save result in converted */
-void convert_number(uintmax_t number, uint8_t radix, char pad, uintmax_t width, uintmax_t precision, bool uppercase, uint8_t sign)
+void convert_number(uintmax_t number, uint8_t radix, char pad, uintmax_t width, uintmax_t length, uintmax_t precision, bool uppercase, uint8_t sign)
 {
     uint8_t negative = 0;
 
@@ -47,7 +47,7 @@ void convert_number(uintmax_t number, uint8_t radix, char pad, uintmax_t width, 
     }
 
     /* char */
-    if (precision == 2)
+    if (UNLIKELY(length == 2))
     {
         number &= (char)-1;
 
@@ -61,7 +61,7 @@ void convert_number(uintmax_t number, uint8_t radix, char pad, uintmax_t width, 
         }
     }
     /* short */
-    else if (precision == 1)
+    else if (UNLIKELY(length == 1))
     {
         number &= (short)-1;
 
@@ -75,7 +75,7 @@ void convert_number(uintmax_t number, uint8_t radix, char pad, uintmax_t width, 
         }
     }
     /* int */
-    else if (precision == 0)
+    else if (LIKELY(length == 0))
     {
         number &= (int)-1;
 
@@ -89,7 +89,7 @@ void convert_number(uintmax_t number, uint8_t radix, char pad, uintmax_t width, 
         }
     }
     /* long */
-    else if (precision == 3)
+    else if (LIKELY(length == 3))
     {
         number &= (long)-1;
 
@@ -120,7 +120,7 @@ void convert_number(uintmax_t number, uint8_t radix, char pad, uintmax_t width, 
     uint8_t index = 0;
 
     /* convert number to string */
-    while (number && index < 255)
+    while ((LIKELY(number)) && (LIKELY(index < 255)))
     {
         /* get digit */
         uint8_t digit = number % radix;
@@ -128,9 +128,9 @@ void convert_number(uintmax_t number, uint8_t radix, char pad, uintmax_t width, 
         number /= radix;
 
         /* convert digit to char */
-        if (digit >= 10)
+        if (UNLIKELY(digit >= 10))
         {
-            if (uppercase)
+            if (UNLIKELY(uppercase))
             {
                 intermediate[index] = digit + 'A' - 10;
             }
@@ -148,7 +148,7 @@ void convert_number(uintmax_t number, uint8_t radix, char pad, uintmax_t width, 
     }
 
     /* handle special case */
-    if (index == 0)
+    if (UNLIKELY(index == 0))
     {
         intermediate[index] = '0';
 
@@ -156,7 +156,7 @@ void convert_number(uintmax_t number, uint8_t radix, char pad, uintmax_t width, 
     }
 
     /* add sign */
-    if (negative && ((index >= width) || (pad == ' ')))
+    if (negative && ((index >= width) || (index >= precision) || (pad == ' ')))
     {
         if (negative & 1)
         {
@@ -177,7 +177,7 @@ void convert_number(uintmax_t number, uint8_t radix, char pad, uintmax_t width, 
     }
 
     /* pad */
-    while ((index < width) && (index < 255))
+    while (((LIKELY(index < width)) || (UNLIKELY(index < precision))) && (LIKELY(index < 255)))
     {
         intermediate[index] = pad;
 
@@ -200,7 +200,7 @@ void convert_number(uintmax_t number, uint8_t radix, char pad, uintmax_t width, 
     }
 
     /* reverse string */
-    for (width = 0; index != (uint8_t)-1; index--, width++)
+    for (width = 0; LIKELY(index != (uint8_t)-1); index--, width++)
     {
         converted[width] = intermediate[index];
     }
@@ -212,19 +212,19 @@ void convert_number(uintmax_t number, uint8_t radix, char pad, uintmax_t width, 
 void putc(const char c)
 {
     /* reset caret to beginning of line */
-    if (c == '\r')
+    if (UNLIKELY(c == '\r'))
     {
         video = (short *)((uintptr_t)video - (((uintptr_t)video - 0xb8000) % 160));
     }
     /* reset caret to beginning of next line */
-    else if (c == '\n')
+    else if (UNLIKELY(c == '\n'))
     {
         video = (short *)((uintptr_t)video - (((uintptr_t)video - 0xb8000) %160) + 160);
     }
     else
     {
         /* scroll lines */
-        while ((uintptr_t)video >= (0xb8000 + (160 * 25)))
+        while (UNLIKELY((uintptr_t)video >= (0xb8000 + (160 * 25))))
         {
             memmove((void *)0xb8000, (void *)(0xb8000 + 160), 160 * 24);
             memset((void *)(0xb8000 + (160 * 24)), 0, 160);
@@ -238,13 +238,14 @@ void putc(const char c)
     printed++;
 }
 
-void puts(const char *s)
+void puts(const char *s, uintmax_t n)
 {
-    while (*s)
+    while ((LIKELY(*s)) && (LIKELY(n > 0)))
     {
         putc(*s);
 
         s++;
+        n--;
     }
 }
 
@@ -257,14 +258,14 @@ int printf(const char *format, ...)
     /* initialize variable argument list */
     va_start(args, format);
 
-    while (*format)
+    while (LIKELY(*format))
     {
-        if (*format == '%')
+        if (UNLIKELY(*format == '%'))
         {
             format++;
 
             /* not in standard, use this for color */
-            if (*format == '[')
+            if (UNLIKELY(*format == '['))
             {
                 color = va_arg(args, int) << 8;
 
@@ -273,7 +274,7 @@ int printf(const char *format, ...)
                 continue;
             }
             /* not in standard, reset to default color */
-            else if (*format == ']')
+            else if (UNLIKELY(*format == ']'))
             {
                 color = 0x0700;
 
@@ -285,7 +286,8 @@ int printf(const char *format, ...)
             uintmax_t width = 0;
             char pad = ' ';
             char pad_mod = 0;
-            uintmax_t precision = 0; /* int */
+            uintmax_t length = 0; /* int */
+            uintmax_t precision = 0;
             bool alternate = false;
             uint8_t sign = 0;
 
@@ -332,48 +334,61 @@ int printf(const char *format, ...)
             }
 
             /* get precision */
-            if (*format == 'h')
+            if (UNLIKELY(*format == '.'))
             {
-                /* short */
-                precision = 1;
-
                 format++;
 
-                if (*format == 'h')
+                while ((*format >= '0') && (*format <= '9'))
                 {
-                    /* char */
-                    precision = 2;
+                    precision = (precision * 10) + (*format - '0');
 
                     format++;
                 }
             }
-            else if (*format == 'l')
+
+            /* get length */
+            if (UNLIKELY(*format == 'h'))
             {
-                /* long */
-                precision = 3;
+                /* short */
+                length = 1;
 
                 format++;
 
-                if (*format == 'l')
+                if (LIKELY(*format == 'h'))
+                {
+                    /* char */
+                    length = 2;
+
+                    format++;
+                }
+            }
+            else if (UNLIKELY(*format == 'l'))
+            {
+                /* long */
+                length = 3;
+
+                format++;
+
+                if (LIKELY(*format == 'l'))
                 {
                     /* long long */
-                    precision = 4;
+                    length = 4;
 
                     format++;
                 }
             }
 
             /* signed int */
-            if ((*format == 'd') || (*format == 'i'))
+            if ((UNLIKELY(*format == 'd')) || (UNLIKELY(*format == 'i')))
             {
                 uintmax_t arg = 0;
 
                 /* get argument, char and short are passed as int */
-                if (precision == 3)
+                if (UNLIKELY(length == 3))
                 {
                     arg = va_arg(args, long int);
                 }
-                else if (precision == 4)
+                else if (UNLIKELY(length == 4))
                 {
                     arg = va_arg(args, long long int);
                 }
@@ -385,24 +400,24 @@ int printf(const char *format, ...)
                 sign++;
 
                 /* convert number */
-                convert_number(arg, 10, pad, width, precision, false, sign);
+                convert_number(arg, 10, pad, width, length, precision, false, sign);
 
                 /* and print it */
-                puts(converted);
+                puts(converted, -1);
 
                 format++;
             }
             /* unsigned int */
-            else if ((*format == 'o') || (*format == 'u') || (*format == 'x') || (*format == 'X'))
+            else if ((UNLIKELY(*format == 'o')) || (LIKELY(*format == 'u')) || (LIKELY(*format == 'x')) || (UNLIKELY(*format == 'X')))
             {
                 uintmax_t arg = 0;
 
                 /* get argument, char and short are passed as int */
-                if (precision == 3)
+                if (UNLIKELY(length == 3))
                 {
                     arg = va_arg(args, unsigned long int);
                 }
-                else if (precision == 4)
+                else if (UNLIKELY(length == 4))
                 {
                     arg = va_arg(args, unsigned long long int);
                 }
@@ -411,58 +426,78 @@ int printf(const char *format, ...)
                     arg = va_arg(args, unsigned int);
                 }
 
-                if (*format == 'o')
+                if (UNLIKELY(*format == 'o'))
                 {
                     if (alternate)
                     {
-                        puts("0");
+                        puts("0", 1);
+
+                        if (width > 1)
+                        {
+                            width -= 1;
+                        }
                     }
 
                     /* convert number */
-                    convert_number(arg, 8, pad, width, precision, false, sign);
+                    convert_number(arg, 8, pad, width, length, precision, false, sign);
                 }
-                else if (*format == 'u')
+                else if (LIKELY(*format == 'u'))
                 {
                     /* convert number */
-                    convert_number(arg, 10, pad, width, precision, false, sign);
+                    convert_number(arg, 10, pad, width, length, precision, false, sign);
                 }
-                else if (*format == 'x')
+                else if (LIKELY(*format == 'x'))
                 {
                     if (alternate)
                     {
-                        puts("0x");
+                        puts("0x", 2);
+
+                        if (width > 1)
+                        {
+                            width -= 2;
+                        }
                     }
 
                     /* convert number */
-                    convert_number(arg, 16, pad, width, precision, false, sign);
+                    convert_number(arg, 16, pad, width, length, precision, false, sign);
                 }
                 else
                 {
                     if (alternate)
                     {
-                        puts("0X");
+                        puts("0X", 2);
+
+                        if (width > 1)
+                        {
+                            width -= 2;
+                        }
                     }
 
                     /* convert number */
-                    convert_number(arg, 16, pad, width, precision, true, sign);
+                    convert_number(arg, 16, pad, width, length, precision, true, sign);
                 }
 
                 /* and print it */
-                puts(converted);
+                puts(converted, -1);
 
                 format++;
             }
             /* const char * */
-            else if (*format == 's')
+            else if (LIKELY(*format == 's'))
             {
                 const char *arg = va_arg(args, const char *);
 
-                puts(arg);
+                if (LIKELY(precision == 0))
+                {
+                    precision = -1;
+                }
+
+                puts(arg, precision);
 
                 format++;
             }
             /* unsigned char */
-            else if (*format == 'c')
+            else if (UNLIKELY(*format == 'c'))
             {
                 unsigned char arg = va_arg(args, int);
 
@@ -471,44 +506,79 @@ int printf(const char *format, ...)
                 format++;
             }
             /* void * */
-            else if (*format == 'p')
+            else if (LIKELY(*format == 'p'))
             {
                 void *arg = va_arg(args, void *);
 
                 /* handle NULL */
-                if (arg == NULL)
+                if (UNLIKELY(arg == NULL))
                 {
-                    puts("(nil)");
+                    puts("(nil)", 5);
                 }
                 else
                 {
                     /* use default formatting for %p */
-                    puts("0x");
+                    puts("0x", 2);
 
-                    if (width == 0)
+                    if (LIKELY(width == 0))
                     {
                         width = 2 * sizeof(void *);
                     }
+                    else
+                    {
+                        width -= 2;
+                    }
 
-                    if (pad_mod == 0)
+                    if (LIKELY(pad_mod == 0))
                     {
                         pad = '0';
                     }
 
                     /* convert number */
-                    convert_number((uintmax_t)(uintptr_t)arg, 16, pad, width, precision, false, sign);
+                    convert_number((uintmax_t)(uintptr_t)arg, 16, pad, width, length, precision, false, sign);
 
                     /* and print it */
-                    puts(converted);
+                    puts(converted, -1);
+                }
+
+                format++;
+            }
+            /* return number of bytes written so far */
+            else if (UNLIKELY(*format == 'n'))
+            {
+                int *arg = va_arg(args, int *);
+
+                if (arg != NULL)
+                {
+                    *arg = printed;
+                }
+
+                format++;
+            }
+            /* pad with char until width */
+            else if (UNLIKELY(*format == 'P'))
+            {
+                char arg = va_arg(args, int);
+
+                if (width > (uintmax_t)printed)
+                {
+                    width = width - printed;
+
+                    while (LIKELY(width > 0))
+                    {
+                        putc(arg);
+
+                        width--;
+                    }
                 }
 
                 format++;
             }
             else /* if(*format == '%') */
             {
-                puts("%");
+                puts("%", 1);
 
-                if (*format == '%')
+                if (LIKELY(*format == '%'))
                 {
                     format++;
                 }

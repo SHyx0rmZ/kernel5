@@ -38,9 +38,9 @@
 
 /* shortcuts */
 #ifdef __LP64__
-#define ARCHDEP(x,y) ((x))
+#define ARCHDEP(x,y) x
 #else
-#define ARCHDEP(x,y) ((y))
+#define ARCHDEP(x,y) y
 #endif
 
 #endif
