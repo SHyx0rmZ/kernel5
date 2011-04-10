@@ -31,6 +31,7 @@
 #include "tss.h"
 #include "syscalls.h"
 #include "memory.h"
+#include "io.h"
 
 /* the kernels main function, this gets called from boot.S */
 void kernel_entry(multiboot_info_t *info)
@@ -43,6 +44,14 @@ void kernel_entry(multiboot_info_t *info)
     idt_load();
 
     pic_init();
+
+    outb(0x3fb, 0x83);
+    outb(0x3f8, 0x0c);
+    outb(0x3f9, 0x00);
+    outb(0x3fb, 0x03);
+    outb(0x3f9, 0x00);
+    outb(0x3fa, 0x00);
+    outb(0x3fc, 0x00);
 
     memset((void *)0xb8000, 0, 160 * 25);
 

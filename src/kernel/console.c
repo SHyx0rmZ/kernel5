@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "console.h"
+#include "io.h"
 
 static short *video = (short *)0xb8000;
 static short color = 0x0700;
@@ -234,6 +235,10 @@ void putc(const char c)
 
         *(video++) = color | c;
     }
+
+    outb(0xe9, c);
+    while((inb(0x3fd) & 0x20) == 0) __asm__ ("nop");
+    outb(0x3f8, c);
 
     printed++;
 }
