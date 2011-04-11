@@ -30,7 +30,7 @@ void syscall_invalid()
 
     while (1)
     {
-        __asm__ (
+        __asm__ __volatile__ (
             "cli \n"
             "hlt \n"
         );
@@ -39,7 +39,7 @@ void syscall_invalid()
 
 void syscall_memory_free(memory_area_t area)
 {
-    __asm__ (
+    __asm__ __volatile__ (
             "push %0 \n"
             "push %1 \n"
             "push %2 \n"

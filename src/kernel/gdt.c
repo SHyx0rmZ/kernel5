@@ -47,7 +47,7 @@ void gdt_load(void)
 
     jump_address.segment = 0x08;
 
-    __asm__ (
+    __asm__ __volatile__ (
         "lgdt %0 \n"
         "mov %1, %%ds \n"
         "mov %1, %%es \n"

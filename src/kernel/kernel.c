@@ -89,14 +89,14 @@ void kernel_entry(multiboot_info_t *info)
 
     printf("%[memory%] freed via %[syscall_memory_free()%]\n", 14, 10, memory.size);
 
-    __asm__ (
+    __asm__ __volatile__ (
         "sti \n"
     );
 
     /* idle */
     while (1)
     {
-        __asm__ (
+        __asm__ __volatile__ (
             "hlt \n"
         );
     }

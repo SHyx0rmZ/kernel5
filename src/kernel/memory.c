@@ -400,7 +400,7 @@ void memory_free(SYSCALL, memory_area_t area)
 
         while (1)
         {
-            __asm__ (
+            __asm__ __volatile__ (
                 "cli \n"
                 "hlt \n"
             );            
@@ -456,7 +456,7 @@ void memory_init(multiboot_memory_t *memory, uint32_t length)
 
             while (1)
             {
-                __asm__ (
+                __asm__ __volatile__ (
                     "cli \n"
                     "hlt \n"
                 );

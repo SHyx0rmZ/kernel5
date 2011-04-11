@@ -25,7 +25,7 @@ tss_t tss;
 /* load the tss */
 void tss_load(void)
 {
-    __asm__ (
+    __asm__ __volatile__ (
         "ltr %w0 \n"
         :: "r"((uint16_t)5 << 3)
     );

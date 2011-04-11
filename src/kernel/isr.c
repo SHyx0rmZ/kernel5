@@ -35,14 +35,14 @@ cpu_state_t *isr_handler(cpu_state_t *cpu)
         {
             uintptr_t cr2;
 
-            __asm__ ("mov %%cr2, %0" : "=a" (cr2));
+            __asm__ __volatile__ ("mov %%cr2, %0" : "=a" (cr2));
 
             printf("CR2: %p", cr2);
         }
 
         while (1)
         {
-            __asm__ (
+            __asm__ __volatile__ (
                 "cli \n"
                 "hlt \n"
             );
@@ -66,7 +66,7 @@ cpu_state_t *isr_handler(cpu_state_t *cpu)
 
         while (1)
         {
-            __asm__ (
+            __asm__ __volatile__ (
                 "cli \n"
                 "hlt \n"
             );

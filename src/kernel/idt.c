@@ -83,5 +83,5 @@ void idt_load(void)
     idt_pointer.limit = (IDT_MAX_ENTRIES * sizeof(idt_entry_t) - 1);
     idt_pointer.base = (uintptr_t)idt;
 
-    __asm__ ("lidt %0" : : "m" (idt_pointer));
+    __asm__ __volatile__ ("lidt %0" : : "m" (idt_pointer));
 }
