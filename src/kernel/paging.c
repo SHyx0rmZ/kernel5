@@ -1,6 +1,6 @@
 /*
  *  ASXSoft Nuke - Operating System - kernel5 - Codename: 理コ込
- *  Copyright (C) 2010 Patrick Pokatilo
+ *  Copyright (C) 2011 Patrick Pokatilo
  *
  *  This file is part of Nuke (理コ込).
  *
@@ -18,15 +18,16 @@
  *  along with Nuke (理コ込).  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _VERSION_H_
-#define _VERSION_H_
+#include <string.h>
 
-#define __BUILD__ 885
-#define __COMMIT__ 52
-#define __HEAD__ "09c389efd0c3768f3a25572d7c477b4928ab3018"
-#define __BRANCH__ "master"
-#define __CHANGED__ "Mon Apr 11 08:48:20 2011 +0200"
-#define __COMPILED__ "Mon, 11 Apr 2011 08:48:37 +0200"
-#define __TAG__ "理コ込-0.0.1"
+#include "paging.h"
+#include "memory.h"
+#include "console.h"
 
-#endif
+void paging_switch(paging_context_t *context)
+{
+    __asm__ __volatile__ (
+        "mov %0, %%cr3"
+        : : "a" (context->cr3)
+    );
+}

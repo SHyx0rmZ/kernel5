@@ -31,6 +31,7 @@
 #include "tss.h"
 #include "syscalls.h"
 #include "memory.h"
+#include "paging.h"
 #include "io.h"
 
 /* the kernels main function, this gets called from boot.S */
@@ -72,7 +73,43 @@ void kernel_entry(multiboot_info_t *info)
 
     smp_init();
 
+    paging_init();
+
+    printf("%[Mapping%] memory...\n", 15);
+
+    paging_context_t *context = paging_context();
+    paging_map(context, 0xdeadc0de, 0x12340000, 0);
+
+    {
+        memory_area_t element = { .address = 0, .size = 0 };
+        uintptr_t i = 0, s = 0, e = 0;
+
+        element = memory_foreach(element);
+
+        while ((LIKELY(element.address != 0)) && (LIKELY(element.size != 0)))
+        {
+            s = element.address & ~0xfff;
+            e = (element.address + element.size);
+
+            if (UNLIKELY(e == 0))
+            {
+                e -= 0x3000;
+            }
+
+            for (i = s; LIKELY(i < e); i += 0x1000)
+            {
+                paging_map(context, i, i, 0);
+            }
+
+            element = memory_foreach(element);
+        }
+    }
+
+    paging_switch(context);
+
     printf("%[Kernel up and running...%]\n", 10);
+
+    printf("\nTesting syscalls:\n%[syscall_memory_alloc()%]: ", 15);
 
     memory_area_t memory = syscall_memory_alloc(0x8000, 0, 0x000000);
 
@@ -87,7 +124,7 @@ void kernel_entry(multiboot_info_t *info)
 
     syscall_memory_free(memory);
 
-    printf("%[memory%] freed via %[syscall_memory_free()%]\n", 14, 10, memory.size);
+    printf("%[memory%] freed via %[syscall_memory_free()%]\n", 14, 15, memory.size);
 
     __asm__ __volatile__ (
         "sti \n"

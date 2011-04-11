@@ -18,15 +18,21 @@
  *  along with Nuke (理コ込).  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _VERSION_H_
-#define _VERSION_H_
+#ifndef _PAGING_H_
+#define _PAGING_H_
 
-#define __BUILD__ 885
-#define __COMMIT__ 52
-#define __HEAD__ "09c389efd0c3768f3a25572d7c477b4928ab3018"
-#define __BRANCH__ "master"
-#define __CHANGED__ "Mon Apr 11 08:48:20 2011 +0200"
-#define __COMPILED__ "Mon, 11 Apr 2011 08:48:37 +0200"
-#define __TAG__ "理コ込-0.0.1"
+#include <stdint.h>
+#include <stddef.h>
+#include <stdbool.h>
+
+typedef struct paging_context
+{
+    uintptr_t cr3;
+} paging_context_t;
+
+void paging_init(void);
+paging_context_t *paging_context(void);
+void paging_switch(paging_context_t *context);
+uintptr_t paging_map(paging_context_t *context, uintptr_t virtual_address, uintptr_t physical_address, uint32_t flags);
 
 #endif

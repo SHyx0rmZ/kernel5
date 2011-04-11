@@ -68,7 +68,7 @@
 .space LOADER_STACK_SIZE
 .set LOADER_STACK_ADDRESS, .
 .set LOADER_PML4_ADDRESS, .
-.space 0x9000 /* its not yet over */
+.space 0xb000 /* its not yet over */
 .endif
 
 #if LOADER_MAP_SIZE < LOADER_STACK_ADDRESS

@@ -33,6 +33,7 @@ typedef struct memory_area
     size_t size;
 } memory_area_t;
 
+memory_area_t memory_foreach(memory_area_t last_element);
 memory_area_t memory_alloc(SYSCALL, size_t size, uintptr_t limit, uintptr_t align);
 void memory_free(SYSCALL, memory_area_t area);
 void memory_init(multiboot_memory_t *memory, uint32_t length);

@@ -65,6 +65,51 @@ void memory_information()
     }
 }
 
+static memory_container_t *memory_last_element = NULL;
+static memory_container_t *memory_last_list = NULL;
+
+/* foreach, basically like strtok() */
+memory_area_t memory_foreach(memory_area_t last_element)
+{
+    memory_area_t element;
+
+    /* reset */
+    if ((UNLIKELY(last_element.address == 0)) && (UNLIKELY(last_element.size == 0)))
+    {
+        memory_last_element = NULL;
+        memory_last_list = list_free;
+    }
+
+    if (memory_last_element == NULL)
+    {
+        /* finished list_free */
+        if (memory_last_list == list_free)
+        {
+            memory_last_element = list_free;
+            memory_last_list = list_used;
+        }
+        /* finished list_used */
+        else if (memory_last_list == list_used)
+        {
+            memory_last_element = list_used;
+            memory_last_list = NULL;
+        }
+        /* no more areas */
+        else
+        {
+            element = (memory_area_t){ .address = 0, .size = 0 };
+
+            return element;
+        }
+    }
+
+    element = (memory_area_t){ .address = memory_last_element->area->address, .size = memory_last_element->area->size };
+
+    memory_last_element = memory_last_element->next;
+
+    return element;
+}
+
 /* sort the memory_list by size, descending */
 void memory_sort(memory_container_t **start)
 {
@@ -595,6 +640,23 @@ void memory_init(multiboot_memory_t *memory, uint32_t length)
     container->prev = NULL;
     area->address = (uintptr_t)kernel_area_begin;
     area->size = (uintptr_t)kernel_area_end - (uintptr_t)kernel_area_begin;
+
+    memory_move_from_to(container, NULL, &list_used);
+
+    /* add used memory block for graphic RAM (0xa0000 - 0xe8000) */
+    alloc = memory_alloc(CALL_AS_NON_SYSCALL, MEMORY_OVERHEAD, 0, 0);
+
+    memory_check_area(alloc);
+
+    container = (memory_container_t *)alloc.address;
+    area = (memory_area_t *)(alloc.address + sizeof(memory_container_t));
+
+    container->area = area;
+    container->freeable = false;
+    container->next = NULL;
+    container->prev = NULL;
+    area->address = 0xa0000;
+    area->size = 0x48000;
 
     memory_move_from_to(container, NULL, &list_used);
 
