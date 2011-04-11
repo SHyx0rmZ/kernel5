@@ -1,6 +1,6 @@
 /*
  *  ASXSoft Nuke - Operating System - kernel5 - Codename: 理コ込
- *  Copyright (C) 2010 Patrick Pokatilo
+ *  Copyright (C) 2011 Patrick Pokatilo
  *
  *  This file is part of Nuke (理コ込).
  *
@@ -18,15 +18,33 @@
  *  along with Nuke (理コ込).  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _VERSION_H_
-#define _VERSION_H_
+#include <stdint.h>
+#include <stdbool.h>
 
-#define __BUILD__ 884
-#define __COMMIT__ 51
-#define __HEAD__ "9b1e2a9dbc01e1769461fdffd7f93802f9e8beef"
-#define __BRANCH__ "master"
-#define __CHANGED__ "Mon Apr 11 08:34:37 2011 +0200"
-#define __COMPILED__ "Mon, 11 Apr 2011 08:44:55 +0200"
-#define __TAG__ "理コ込-0.0.1"
+#include "cpuid.h"
 
-#endif
+extern bool cpuid_initialized, cpuid_supported;
+extern uint32_t cpuid_max_standard, cpuid_max_extended;
+
+void cpuid_check_support(void)
+{
+    __asm__ __volatile__ (
+        "pushf \n"
+        "pop %%rax \n"
+        "mov %%rax, %%rcx \n"
+        "xor $0x2000000, %%rax \n"
+        "push %%rax \n"
+        "popf \n"
+        "pushf \n"
+        "pop %%rax \n"
+        "xor %%rcx, %%rax \n"
+        : "=a" (cpuid_supported)
+        : : "rcx"
+    );
+
+    if (cpuid_supported)
+    {
+        cpuid_max_standard = cpuid(0x00000000).eax;
+        cpuid_max_extended = cpuid(0x80000000).eax;
+    }
+}

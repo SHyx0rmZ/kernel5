@@ -18,15 +18,21 @@
  *  along with Nuke (理コ込).  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _VERSION_H_
-#define _VERSION_H_
+#ifndef _CPUID_H_
+#define _CPUID_H_
 
-#define __BUILD__ 884
-#define __COMMIT__ 51
-#define __HEAD__ "9b1e2a9dbc01e1769461fdffd7f93802f9e8beef"
-#define __BRANCH__ "master"
-#define __CHANGED__ "Mon Apr 11 08:34:37 2011 +0200"
-#define __COMPILED__ "Mon, 11 Apr 2011 08:44:55 +0200"
-#define __TAG__ "理コ込-0.0.1"
+#include <stdint.h>
+
+typedef struct cpuid_result
+{
+    uint32_t eax;
+    uint32_t ecx;
+    uint32_t edx;
+    uint32_t ebx;
+} cpuid_result_t;
+
+cpuid_result_t cpuid(uint32_t function);
+cpuid_result_t cpuid_standard(uint32_t function);
+cpuid_result_t cpuid_extended(uint32_t function);
 
 #endif
