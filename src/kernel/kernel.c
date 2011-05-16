@@ -46,6 +46,7 @@ void kernel_entry(multiboot_info_t *info)
 
     pic_init();
 
+#ifdef PRINT_DEBUG
     outb(0x3fb, 0x83);
     outb(0x3f8, 0x0c);
     outb(0x3f9, 0x00);
@@ -53,6 +54,7 @@ void kernel_entry(multiboot_info_t *info)
     outb(0x3f9, 0x00);
     outb(0x3fa, 0x00);
     outb(0x3fc, 0x00);
+#endif
 
     memset((void *)0xb8000, 0, 160 * 25);
 
@@ -71,14 +73,13 @@ void kernel_entry(multiboot_info_t *info)
     tss_init();
     tss_load();
 
-    smp_init();
-
     paging_init();
 
     printf("%[Mapping%] memory...\n", 15);
 
     paging_context_t *context = paging_context();
-    paging_map(context, 0xdeadc0de, 0x12340000, 0);
+    paging_map(context, 0xdeadc0de, 0x12340000, PAGE_PRESENT_BIT);
+    paging_map(context, 0, 0, PAGE_PRESENT_BIT);
 
     {
         memory_area_t element = { .address = 0, .size = 0 };
@@ -98,7 +99,7 @@ void kernel_entry(multiboot_info_t *info)
 
             for (i = s; LIKELY(i < e); i += 0x1000)
             {
-                paging_map(context, i, i, 0);
+                paging_map(context, i, i, PAGE_PRESENT_BIT | PAGE_WRITE_BIT | PAGE_USER_BIT);
             }
 
             element = memory_foreach(element);

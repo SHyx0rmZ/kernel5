@@ -46,15 +46,15 @@ void paging_init(void)
     }
 
     pd[1023] = area.address & ~0x0fff;
-    pd[1023] |= 0x0f;
+    pd[1023] |= PAGE_PRESENT_BIT | PAGE_WRITE_BIT | PAGE_USER_BIT ;
 
     memset((void *)(pd[1023] & ~0x0fff), 0, 0x1000);
 
     uintptr_t *pt = (uintptr_t *)(pd[1023] & ~0x0fff);
     pt[1022] = (uintptr_t)pt;
-    pt[1022] |= 0x0f;
+    pt[1022] |= PAGE_PRESENT_BIT | PAGE_CACHEDISABLE_BIT;
     pt[1023] = (uintptr_t)NULL;
-    pt[1023] |= 0x0f;
+    pt[1023] |= PAGE_PRESENT_BIT | PAGE_CACHEDISABLE_BIT;
 }
 
 paging_context_t *paging_context(void)
@@ -79,7 +79,7 @@ paging_context_t *paging_context(void)
 
     context->cr3 = area.address;
 
-    *invalidator = (uintptr_t)(context->cr3 & ~0x0fff) | 0x0f;
+    *invalidator = (uintptr_t)(context->cr3 & ~0x0fff) | PAGE_PRESENT_BIT | PAGE_CACHEDISABLE_BIT;
 
     __asm__ __volatile__ ("invlpg %0" : : "m" (*(uint8_t *)0xfffff000));
 
@@ -96,7 +96,7 @@ paging_context_t *paging_context(void)
     }
 
     pd[1023] = area.address;
-    pd[1023] |= 0x0f;
+    pd[1023] |= PAGE_PRESENT_BIT | PAGE_WRITE_BIT | PAGE_USER_BIT;
 
     *invalidator = (uintptr_t)(pd[1023] & ~0x0fff) | 0x0f;
 
@@ -106,17 +106,17 @@ paging_context_t *paging_context(void)
 
     uintptr_t *pt = (uintptr_t *)0xfffff000;
     pt[1022] = (uintptr_t)(*invalidator & ~0x0fff);
-    pt[1022] |= 0x0f;
+    pt[1022] |= PAGE_PRESENT_BIT | PAGE_CACHEDISABLE_BIT;
     pt[1023] = (uintptr_t)NULL;
-    pt[1023] |= 0x0f;
+    pt[1023] |= PAGE_PRESENT_BIT | PAGE_CACHEDISABLE_BIT;
+
+    unlock(&lock_paging);
 
     return context;
 }
 
 uintptr_t paging_map(paging_context_t *context, uintptr_t virtual_address, uintptr_t physical_address, uint32_t flags)
 {
-    flags = 0;
-
     uint16_t pdi = (virtual_address >> 22) & 0x3ff;
     uint16_t pti = (virtual_address >> 12) & 0x3ff;
 
@@ -127,7 +127,7 @@ uintptr_t paging_map(paging_context_t *context, uintptr_t virtual_address, uintp
         while(1);
     }
 
-    *invalidator = (uintptr_t)(context->cr3 & ~0x0fff) | 0x0f;
+    *invalidator = (uintptr_t)(context->cr3 & ~0x0fff) | PAGE_PRESENT_BIT | PAGE_CACHEDISABLE_BIT;
 
     __asm__ __volatile__ ("invlpg %0" : : "m" (*(uint8_t *)0xfffff000));
 
@@ -147,17 +147,17 @@ uintptr_t paging_map(paging_context_t *context, uintptr_t virtual_address, uintp
 
         memset((void *)pd[pdi], 0, 0x1000);
 
-        pd[pdi] |= 0x0f;
+        pd[pdi] |= PAGE_PRESENT_BIT | PAGE_WRITE_BIT | PAGE_USER_BIT;
     }
 
-    *invalidator = (uintptr_t)(pd[pdi] & ~0x0fff) | 0x0f;
+    *invalidator = (uintptr_t)(pd[pdi] & ~0x0fff) | PAGE_PRESENT_BIT | PAGE_CACHEDISABLE_BIT;
 
     __asm__ __volatile__ ("invlpg %0" : : "m" (*(uint8_t *)0xfffff000));
 
     uintptr_t *pt = (uintptr_t *)0xfffff000;
 
     pt[pti] = (uintptr_t)(physical_address & ~0x0fff);
-    pt[pti] |= 0x0f;
+    pt[pti] |= flags & 0x0f7f;
 
     *invalidator = (uintptr_t)NULL;
 

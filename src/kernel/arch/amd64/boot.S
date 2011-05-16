@@ -142,8 +142,9 @@ loader_jmp_to_kernel:
     orl $0x80000000, %eax
     movl %eax, %cr0
 
+    /* 32 bit mapping? */
     /* transfer control to known 64 bit segment */
-    jmp $24, $loader_switch_to_amd64
+    ljmp $24, $loader_switch_to_amd64
 
 .local loader_switch_to_amd64
 loader_switch_to_amd64:

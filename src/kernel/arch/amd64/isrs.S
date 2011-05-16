@@ -100,8 +100,26 @@ isr_stub_common:
     pushq %r14
     pushq %r15
 
+    pushq $0
+    pushq $0
+    pushq $0
+    pushq $0
+
     movq %rsp, %rdi
+
+    movw %ds, 24(%rdi)
+    movw %es, 16(%rdi)
+    movw %fs, 8(%rdi)
+    movw %gs, (%rdi)
+
     call isr_handler
+
+    movw (%rax), %gs
+    movw 8(%rax), %fs
+    movw 16(%rax), %es
+    movw 24(%rax), %ds
+
+    addq $32, %rax
     movq %rax, %rsp
 
     popq %r15

@@ -43,4 +43,6 @@
 #define ARCHDEP(x,y) y
 #endif
 
+#define PRINT_DEBUG
+
 #endif

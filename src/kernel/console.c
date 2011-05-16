@@ -236,9 +236,11 @@ void putc(const char c)
         *(video++) = color | c;
     }
 
+#ifdef PRINT_DEBUG
     outb(0xe9, c);
     while((inb(0x3fd) & 0x20) == 0) __asm__ ("nop");
     outb(0x3f8, c);
+#endif
 
     printed++;
 }

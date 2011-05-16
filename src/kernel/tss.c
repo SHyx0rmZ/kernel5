@@ -22,6 +22,8 @@
 
 tss_t tss;
 
+/* FIXME: threading */
+
 /* load the tss */
 void tss_load(void)
 {

@@ -57,6 +57,6 @@ void gdt_load(void)
         "movl $gdt_jump, %3 \n"
         "ljmpl *%3 \n"
         "gdt_jump: \n"
-        :: "m" (gdt_pointer), "r"(0x10), "r"(0), "m"(jump_address)
+        :: "m" (gdt_pointer), "r"(0x10), "r"(0), "m"(jump_address) : "memory"
     );
 }

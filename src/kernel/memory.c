@@ -48,7 +48,7 @@ void memory_information()
     {
         j = i->next;
 
-        printf("free | %p - %p%" ARCHDEP("46", "30") "P | %s\n", i->area->address, i->area->address + i->area->size, ' ', ((i->freeable == true) ? "freeable" : "not freeable"));
+        printf("free | %p%" ARCHDEP("25", "17") "P - %p%" ARCHDEP("46", "30") "P | %s\n", i->area->address, ' ', i->area->address + i->area->size, ' ', ((i->freeable == true) ? "freeable" : "not freeable"));
 
         i = j;
     }
@@ -59,7 +59,7 @@ void memory_information()
     {
         j = i->next;
 
-        printf("used | %p - %p%" ARCHDEP("46", "30") "P | %s\n", i->area->address, i->area->address + i->area->size, ' ', ((i->freeable == true) ? "freeable" : "not freeable"));
+        printf("used | %p%" ARCHDEP("25", "17") "P - %p%" ARCHDEP("46", "30") "P | %s\n", i->area->address, ' ', i->area->address + i->area->size, ' ', ((i->freeable == true) ? "freeable" : "not freeable"));
 
         i = j;
     }
@@ -656,7 +656,7 @@ void memory_init(multiboot_memory_t *memory, uint32_t length)
     container->next = NULL;
     container->prev = NULL;
     area->address = 0xa0000;
-    area->size = 0x48000;
+    area->size = 0x60000;
 
     memory_move_from_to(container, NULL, &list_used);
 

@@ -92,8 +92,26 @@ isr_stub_common:
     pushl %edi
     pushl %ebp
 
+    pushl $0
+    pushl $0
+    pushl $0
+    pushl $0
+
     pushl %esp
+
+    movw %ds, 16(%esp)
+    movw %es, 12(%esp)
+    movw %fs, 8(%esp)
+    movw %gs, 4(%esp)
+
     call isr_handler
+
+    movw 4(%esp), %gs
+    movw 8(%esp), %fs
+    movw 12(%esp), %es
+    movw 16(%esp), %ds
+
+    addl $16, %eax
     movl %eax, %esp
 
     popl %ebp

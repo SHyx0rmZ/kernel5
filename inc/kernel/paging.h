@@ -25,6 +25,15 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#define PAGE_PRESENT_BIT        0x0001
+#define PAGE_WRITE_BIT          0x0002
+#define PAGE_USER_BIT           0x0004
+#define PAGE_WRITETHROUGH_BIT   0x0008
+#define PAGE_CACHEDISABLE_BIT   0x0010
+#define PAGE_ACCESSED_BIT       0x0020
+#define PAGE_DIRTY_BIT          0x0040
+#define PAGE_GLOBAL_BIT         0x0100
+
 typedef struct paging_context
 {
     uintptr_t cr3;

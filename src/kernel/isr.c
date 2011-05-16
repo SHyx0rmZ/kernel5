@@ -40,6 +40,8 @@ cpu_state_t *isr_handler(cpu_state_t *cpu)
             printf("CR2: %p", cr2);
         }
 
+        printf("%p %p %p\n", ARCHDEP(cpu->rsp, cpu->esp), cpu->ds, cpu->gs);
+
         while (1)
         {
             __asm__ __volatile__ (
