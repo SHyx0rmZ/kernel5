@@ -23,8 +23,10 @@
 #include "paging.h"
 #include "memory.h"
 #include "console.h"
+#include "lock.h"
 
 static uintptr_t *invalidator = (uintptr_t *)0xffffeffc;
+static lock_t lock_paging = 0;
 
 void paging_init(void)
 {
@@ -79,6 +81,8 @@ paging_context_t *paging_context(void)
 
     context->cr3 = area.address;
 
+    lock(&lock_paging);
+
     *invalidator = (uintptr_t)(context->cr3 & ~0x0fff) | PAGE_PRESENT_BIT | PAGE_CACHEDISABLE_BIT;
 
     __asm__ __volatile__ ("invlpg %0" : : "m" (*(uint8_t *)0xfffff000));
@@ -91,6 +95,8 @@ paging_context_t *paging_context(void)
 
     if (area.size == 0)
     {
+        unlock(&lock_paging);
+
         printf("%[Ran out of memory while mapping!%]", 12);
         while(1);
     }
@@ -127,6 +133,8 @@ uintptr_t paging_map(paging_context_t *context, uintptr_t virtual_address, uintp
         while(1);
     }
 
+    lock(&lock_paging);
+
     *invalidator = (uintptr_t)(context->cr3 & ~0x0fff) | PAGE_PRESENT_BIT | PAGE_CACHEDISABLE_BIT;
 
     __asm__ __volatile__ ("invlpg %0" : : "m" (*(uint8_t *)0xfffff000));
@@ -139,6 +147,8 @@ uintptr_t paging_map(paging_context_t *context, uintptr_t virtual_address, uintp
 
         if (area.size == 0)
         {
+            unlock(&lock_paging);
+
             printf("%[Ran out of memory while mapping!%]", 12);
             while(1);
         }
@@ -162,6 +172,8 @@ uintptr_t paging_map(paging_context_t *context, uintptr_t virtual_address, uintp
     *invalidator = (uintptr_t)NULL;
 
     __asm__ __volatile__ ("invlpg %0" : : "m" (*(uint8_t *)virtual_address));
+
+    unlock(&lock_paging);
 
     return physical_address & ~0x0fff;
 }

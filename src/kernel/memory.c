@@ -20,6 +20,7 @@
 
 #include "memory.h"
 #include "console.h"
+#include "lock.h"
 
 #define MEMORY_OVERHEAD (sizeof(memory_container_t) + sizeof(memory_area_t))
 
@@ -36,11 +37,14 @@ typedef struct memory_container
 
 static memory_container_t *list_free = NULL;
 static memory_container_t *list_used = NULL;
+static lock_t lock_memory = 0;
 
 /* print memory information */
 void memory_information()
 {
     memory_container_t *i, *j;
+
+    lock(&lock_memory);
 
     i = list_free;
 
@@ -63,6 +67,8 @@ void memory_information()
 
         i = j;
     }
+
+    unlock(&lock_memory);
 }
 
 static memory_container_t *memory_last_element = NULL;
@@ -113,6 +119,8 @@ memory_area_t memory_foreach(memory_area_t last_element)
 /* sort the memory_list by size, descending */
 void memory_sort(memory_container_t **start)
 {
+    lock(&lock_memory);
+
     memory_container_t *i = *start, *j, *c;
 
     /* selection sort (?) */
@@ -172,6 +180,8 @@ void memory_sort(memory_container_t **start)
             i = i->next;
         }
     }
+
+    unlock(&lock_memory);
 }
 
 /* add a memory container after an other */
@@ -310,6 +320,8 @@ memory_container_t *memory_split(memory_container_t *container, uintptr_t addres
 
 memory_area_t memory_alloc(SYSCALL, size_t size, uintptr_t limit, uintptr_t align)
 {
+    lock(&lock_memory);
+
     memory_container_t *container = list_free;
 
     if (LIKELY(align == 0))
@@ -332,12 +344,16 @@ memory_area_t memory_alloc(SYSCALL, size_t size, uintptr_t limit, uintptr_t alig
 
         if (UNLIKELY(container == NULL))
         {
+            unlock(&lock_memory);
+
             return (memory_area_t){ .address = (uintptr_t)NULL, .size = 0 };
         }
 
         memory_container_t *selected = memory_split(container, container->area->address, size);
 
         memory_move_from_to(selected, &list_free, &list_used);
+
+        unlock(&lock_memory);
 
         return (memory_area_t){ .address = selected->area->address, .size = selected->area->size };
     }
@@ -373,6 +389,8 @@ memory_area_t memory_alloc(SYSCALL, size_t size, uintptr_t limit, uintptr_t alig
                     {
                         memory_move_from_to(container, &list_free, &list_used);
 
+                        unlock(&lock_memory);
+
                         return (memory_area_t){ .address = container->area->address, .size = container->area->size };
                     }
                 }
@@ -387,6 +405,8 @@ memory_area_t memory_alloc(SYSCALL, size_t size, uintptr_t limit, uintptr_t alig
 
                             memory_move_from_to(selected, &list_free, &list_used);
 
+                            unlock(&lock_memory);
+
                             return (memory_area_t){ .address = selected->area->address, .size = selected->area->size };
                         }
                     }
@@ -399,10 +419,14 @@ memory_area_t memory_alloc(SYSCALL, size_t size, uintptr_t limit, uintptr_t alig
 
                             if (UNLIKELY(selected != memory_split(selected, aligned_address, size)))
                             {
+                                unlock(&lock_memory);
+
                                 return (memory_area_t){ .address = (uintptr_t)NULL, .size = 0 };
                             }
 
                             memory_move_from_to(selected, &list_free, &list_used);
+
+                            unlock(&lock_memory);
 
                             return (memory_area_t){ .address = selected->area->address, .size = selected->area->size };
                         }
@@ -415,15 +439,21 @@ memory_area_t memory_alloc(SYSCALL, size_t size, uintptr_t limit, uintptr_t alig
 
         if (UNLIKELY(container == NULL))
         {
+            unlock(&lock_memory);
+
             return (memory_area_t){ .address = (uintptr_t)NULL, .size = 0 };
         }
     }
+
+    unlock(&lock_memory);
 
     return (memory_area_t){ .address = (uintptr_t)NULL, .size = 0 };
 }
 
 void memory_free(SYSCALL, memory_area_t area)
 {
+    lock(&lock_memory);
+
     memory_container_t *container = list_used;
 
     /* search for allocated area */
@@ -440,6 +470,8 @@ void memory_free(SYSCALL, memory_area_t area)
     /* not allocated or not freeable */
     if ((UNLIKELY(container == NULL)) || (UNLIKELY(container->freeable == false)))
     {
+        unlock(&lock_memory);
+
         /* TODO kill task */
         printf("%[Attempted to free invalid area!%]", 12);
 
@@ -488,6 +520,8 @@ void memory_free(SYSCALL, memory_area_t area)
 
         container->prev = container->prev->prev;
     }
+
+    unlock(&lock_memory);
 }
 
 void memory_init(multiboot_memory_t *memory, uint32_t length)

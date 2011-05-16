@@ -33,6 +33,19 @@
 #include "memory.h"
 #include "paging.h"
 #include "io.h"
+#include "smp.h"
+
+void kernel_entry_smp(void)
+{
+    gdt_load();
+    idt_load();
+
+    volatile smp_startup_data_t *startup_data = (smp_startup_data_t *)SMP_STARTUP_ADDRESS;
+
+    startup_data->status |= SMP_RUNNING;
+
+    while(1);
+}
 
 /* the kernels main function, this gets called from boot.S */
 void kernel_entry(multiboot_info_t *info)
@@ -107,6 +120,10 @@ void kernel_entry(multiboot_info_t *info)
     }
 
     paging_switch(context);
+
+    printf("Initializing %[SMP%]...\n", 15);
+
+    smp_init(context);
 
     printf("%[Kernel up and running...%]\n", 10);
 

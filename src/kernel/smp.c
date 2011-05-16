@@ -19,9 +19,20 @@
  */
 
 #include <stddef.h>
+#include <string.h>
 
 #include "smp.h"
 #include "console.h"
+#include "apic.h"
+#include "memory.h"
+#include "cpu.h"
+
+static cpu_t *smp_processors = NULL;
+static uint32_t smp_processor_count = 0;
+
+extern void smp_initializer_begin(void);
+extern void smp_initializer_end(void);
+extern void kernel_entry_smp(void);
 
 /* find the floating structure */
 smp_floating_t *smp_find_floating(uintptr_t start, size_t size)
@@ -56,7 +67,7 @@ smp_floating_t *smp_find_floating(uintptr_t start, size_t size)
     return NULL;
 }
 
-void smp_init(void)
+void smp_init(paging_context_t *context)
 {
     smp_floating_t *floating;
 
@@ -91,77 +102,201 @@ void smp_init(void)
         while(1);
     }
 
-    smp_config_entry_t *iterator = (smp_config_entry_t *)((uintptr_t)config + sizeof(smp_config_table_t));
-    uint16_t entries;
-    uint16_t cpus = 0;
+    paging_map(context, config->local_apic, config->local_apic, PAGE_PRESENT_BIT | PAGE_WRITE_BIT | PAGE_CACHEDISABLE_BIT);
 
-    for (entries = 0; entries < config->entry_count; entries++)
+    local_apic_init(config->local_apic);
+
     {
-        if (iterator->entry_type == 0)
-        {
-            smp_config_processor_t *cpu = (smp_config_processor_t *)iterator;
+        smp_config_entry_t *iterator = (smp_config_entry_t *)((uintptr_t)config + sizeof(smp_config_table_t));
+        uint16_t entries;
 
-            if (cpu->flags & SMP_FLAG_ACTIVE)
+        for (entries = 0; entries < config->entry_count; entries++)
+        {
+            if (iterator->entry_type == 0)
             {
-                printf("CPU #%hu %[enabled%]\n", entries, 10);
+                smp_config_processor_t *cpu = (smp_config_processor_t *)iterator;
+
+                if (cpu->flags & SMP_FLAG_ACTIVE)
+                {
+                    smp_processor_count++;
+                }
+
+                cpu++;
+
+                iterator = (smp_config_entry_t *)cpu;
+            }
+            else if (iterator->entry_type <= 4)
+            {
+                iterator++;
             }
             else
             {
-                printf("CPU #%hu %[disabled%]\n", entries, 12);
+                printf("%[Unknown SMP type '%u'!%]", 12, iterator->entry_type);
+                while(1);
             }
-
-            if (cpu->flags & SMP_FLAG_BOOT)
-            {
-                printf("Bootprocessor properties:\n");
-                printf("APIC ID      : %03hhu\n", cpu->local_apic_id);
-                printf("APIC Version : %03hhu\n", cpu->local_apic_version);
-                printf("Feature flags: %#0.8x\n", cpu->feature_flags);
-                printf("Local APIC   : %#0p\n", config->local_apic);
-            }
-
-            cpu++;
-            cpus++;
-
-            iterator = (smp_config_entry_t *)cpu;
         }
-        else if (iterator->entry_type == 1)
+
+        memory_area_t area = memory_alloc(CALL_AS_NON_SYSCALL, sizeof(cpu_t) * smp_processor_count, 0, 0);
+
+        if (area.size == 0)
         {
-            smp_config_bus_t *bus = (smp_config_bus_t *)iterator;
-
-            printf("Bus #%03hhu is %c%c%c%c%c%c\n", bus->id, bus->type[0], bus->type[1], bus->type[2], bus->type[3], bus->type[4], bus->type[5]);
-
-            iterator++;
+            printf("%[Ran out of memory while initializing SMP!%]", 12);
+            while(1);
         }
-        else if (iterator->entry_type == 2)
-        {
-            smp_config_io_apic_t *io = (smp_config_io_apic_t *)iterator;
 
-            printf("IO APIC #%03hhu (Version %03hhu) with flags %#0.2hhx located at %p\n", io->id, io->version, io->flags, io->address);
+        smp_processors = (cpu_t *)area.address;
 
-            iterator++;
-        }
-        else if (iterator->entry_type == 3)
-        {
-            smp_config_io_assignment_t *assign = (smp_config_io_assignment_t *)iterator;
-
-            printf("IO Assignment of Type '%s' with flag %#0.4hx from %03hhu->%03hhu to %03hhu->%03hhu\n", (assign->type & 2 ? (assign->type & 1 ? "ExtINT" : "SMI") : (assign->type & 1) ? "NMI" : "INT"), assign->flag, assign->src_id, assign->src_irq, assign->dest_id, assign->dest_int);
-
-            iterator++;
-        }
-        else if (iterator->entry_type == 4)
-        {
-            smp_config_local_assignment_t *assign = (smp_config_local_assignment_t *)iterator;
-
-            printf("Local Assignment of Type '%s' with flag %#0.4hx from %03hhu->%03hhu to %03hhu->%03hhu\n", (assign->type & 2 ? (assign->type & 1 ? "ExtINT" : "SMI") : (assign->type & 1) ? "NMI" : "INT"), assign->flag, assign->src_id, assign->src_irq, assign->dest_id, assign->dest_int);
-
-            iterator++;
-        }
-        else
-        {
-            printf("%[%u%]\n", 12, iterator->entry_type);
-            while (1);
-        } 
+        memset(smp_processors, 0, area.size);
     }
 
-    printf("%[%hu%] cpu%s found\n", 9, cpus, ((cpus == 1) ? "" : "s"));
+    {
+        smp_config_entry_t *iterator = (smp_config_entry_t *)((uintptr_t)config + sizeof(smp_config_table_t));
+        uint16_t entries;
+        uint16_t cpu_index = 0;
+        uint16_t cpu_id = 0;
+
+        for (entries = 0; entries < config->entry_count; entries++)
+        {
+            if (iterator->entry_type == 0)
+            {
+                smp_config_processor_t *cpu = (smp_config_processor_t *)iterator;
+
+                if (cpu->flags & SMP_FLAG_ACTIVE)
+                {
+                    printf("CPU #%hu %[enabled%]\n", cpu_id, 10);
+
+                    smp_processors[cpu_index].proc_id = cpu_id;
+                    smp_processors[cpu_index].apic_id = cpu->local_apic_id;
+                    smp_processors[cpu_index].boot = (cpu->flags & SMP_FLAG_BOOT) ? true : false;
+                    smp_processors[cpu_index].up = (cpu->flags & SMP_FLAG_BOOT) ? true : false;
+                    smp_processors[cpu_index].context = context;
+                    smp_processors[cpu_index].thread = NULL;
+
+                    cpu_index++;
+                }
+                else
+                {
+                    printf("CPU #%hu %[disabled%]\n", cpu_id, 12);
+                }
+
+                cpu_id++;
+                cpu++;
+
+                iterator = (smp_config_entry_t *)cpu;
+            }
+            else if (iterator->entry_type == 1)
+            {
+                smp_config_bus_t *bus = (smp_config_bus_t *)iterator;
+
+                printf("Bus #%03hhu is %c%c%c%c%c%c\n", bus->id, bus->type[0], bus->type[1], bus->type[2], bus->type[3], bus->type[4], bus->type[5]);
+
+                iterator++;
+            }
+            else if (iterator->entry_type == 2)
+            {
+                smp_config_io_apic_t *io = (smp_config_io_apic_t *)iterator;
+
+                printf("IO APIC #%03hhu (version %03hhu) with flags %#0.2hhx located at %p\n", io->id, io->version, io->flags, io->address);
+
+                if (io->flags & 1)
+                {
+                    paging_map(context, io->address, io->address, PAGE_PRESENT_BIT | PAGE_WRITE_BIT | PAGE_CACHEDISABLE_BIT);
+                }
+
+                iterator++;
+            }
+            else if (iterator->entry_type == 3)
+            {
+                smp_config_io_assignment_t *assign = (smp_config_io_assignment_t *)iterator;
+
+                printf("IO Assignment of type '%s' with flag %#0.4hx from %03hhu->%03hhu to %03hhu->%03hhu\n", (assign->type & 2 ? (assign->type & 1 ? "ExtINT" : "SMI") : (assign->type & 1) ? "NMI" : "INT"), assign->flag, assign->src_id, assign->src_irq, assign->dest_id, assign->dest_int);
+
+                iterator++;
+            }
+            else if (iterator->entry_type == 4)
+            {
+                smp_config_local_assignment_t *assign = (smp_config_local_assignment_t *)iterator;
+
+                printf("Local Assignment of type '%s' with flag %#0.4hx from %03hhu->%03hhu to %03hhu->%03hhu\n", (assign->type & 2 ? (assign->type & 1 ? "ExtINT" : "SMI") : (assign->type & 1) ? "NMI" : "INT"), assign->flag, assign->src_id, assign->src_irq, assign->dest_id, assign->dest_int);
+
+                iterator++;
+            }
+            else
+            {
+                printf("%[Unkown SMP type '%u'!%]\n", 12, iterator->entry_type);
+                while (1);
+            }
+        }
+
+        printf("%[%hu%] cpu%s found\n", 9, cpu_id, ((cpu_id == 1) ? "" : "s"));
+    }
+
+    if (smp_processor_count == 1)
+    {
+        return;
+    }
+
+    __asm__ __volatile__ ("sti");
+    __asm__ __volatile__ ("hlt");
+
+    local_apic_write(0x310, 0);
+    local_apic_write(0x300, 0x0cc500);
+
+    __asm__ __volatile__ ("hlt");
+
+    local_apic_write(0x310, 0);
+    local_apic_write(0x300, 0x0c8500);
+
+    __asm__ __volatile__ ("hlt");
+
+    volatile smp_startup_data_t *startup_data = (smp_startup_data_t *)SMP_STARTUP_ADDRESS;
+
+    {
+        uint32_t i;
+
+        for (i = 0; i < smp_processor_count; i++)
+        {
+            if (smp_processors[i].boot == true)
+            {
+                continue;
+            }
+
+            memcpy((void *)startup_data, smp_initializer_begin, smp_initializer_end - smp_initializer_begin);
+
+            startup_data->status = 0;
+            startup_data->context = (uintptr_t)smp_processors[i].context->cr3;
+            startup_data->kernel = (uintptr_t)kernel_entry_smp;
+
+            memory_area_t area = memory_alloc(CALL_AS_NON_SYSCALL, 0x1000, 0, 0);
+
+            if (area.size == 0)
+            {
+                printf("%[Ran out of memory while initializing SMP!%]", 12);
+                while(1);
+            }
+
+            startup_data->stack = area.address + 0x1000;
+
+            local_apic_write(0x310, smp_processors[i].apic_id << 24);
+            local_apic_write(0x300, 0x0600 | (SMP_STARTUP_VECTOR & 0xff));
+
+            __asm__ __volatile__ ("hlt");
+
+            if (!(startup_data->status & SMP_STARTING))
+            {
+                local_apic_write(0x310, smp_processors[i].apic_id << 24);
+                local_apic_write(0x300, 0x0600 | (SMP_STARTUP_VECTOR & 0xff));
+
+                __asm__ __volatile__ ("hlt");
+            }
+
+            printf("%u - %u\n", i, startup_data->status);
+
+            while (!(startup_data->status & SMP_RUNNING));
+
+            smp_processors[i].up = true;
+        }
+    }
+
+    __asm__ __volatile__ ("cli");
 }

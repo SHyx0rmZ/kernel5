@@ -23,8 +23,10 @@
 
 #include <stdint.h>
 
+#include "paging.h"
+
 /* functions */
-void smp_init();
+void smp_init(paging_context_t *context);
 
 /* structs */
 typedef struct smp_floating
@@ -109,7 +111,22 @@ typedef struct smp_config_entry
     uint8_t reserved[7];
 } __attribute__((packed)) smp_config_entry_t;
 
+typedef struct smp_startup_data
+{
+    uint8_t jump[5];
+    uint8_t status;
+    uint64_t stack;
+    uint64_t context;
+    uint64_t kernel;
+} __attribute__((packed)) smp_startup_data_t;
+
 #define SMP_FLAG_ACTIVE 1
 #define SMP_FLAG_BOOT   2
+#define SMP_STARTING    1
+#define SMP_RUNNING     2
+
+#define SMP_STARTUP_ADDRESS 0x8000
+
+#define SMP_STARTUP_VECTOR (SMP_STARTUP_ADDRESS / 0x1000)
 
 #endif

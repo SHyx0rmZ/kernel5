@@ -35,6 +35,7 @@ DIR_RES = $(DIR_CWD)/res
 DIR_EXT = $(DIR_OBJ)/ext
 
 TAR_KER = $(DIR_BIN)/kernel
+TAR_SMP = $(DIR_OBJ)/smpinit
 
 MAKE = make -s
 CC = gcc
@@ -100,6 +101,16 @@ $(TAR_KER): $(patsubst $(DIR_SRC)/%.c,$(DIR_OBJ)/%_c.o,$(patsubst $(DIR_SRC)/%.S
 	@mkdir -p $(dir $@)
 	@echo 'CC       $(patsubst $(DIR_BIN)/%,%,$@_$(ARCH))'
 	@$(LD) $(LDFLAGS) -o $@_$(ARCH) $^ -T$(DIR_SRC)/kernel/link/$(ARCH).ld
+
+$(TAR_SMP): $(patsubst $(DIR_SRC)/%.S,$(DIR_OBJ)/%_S.o,$(shell find $(DIR_SRC)/smpinit \( -iregex ".*\.S" \) -and -not -iregex "$(DIR_SRC)/smpinit/arch/.*") $(shell find $(DIR_SRC)/smpinit/arch/$(ARCH) -iregex ".*\.S"))
+	@mkdir -p $(dir $@)
+	@echo 'ASM      $(patsubst $(DIR_OBJ)/%,%,$@.bin)'
+	@$(LD) $(LDFLAGS) -o $@.bin $^ -T$(DIR_SRC)/smpinit/link/$(ARCH).ld
+
+$(DIR_OBJ)/kernel/smpinit_S.o: $(DIR_SRC)/kernel/smpinit.S $(TAR_SMP)
+	@mkdir -p $(dir $@)
+	@echo 'ASM      $(patsubst $(DIR_SRC)/%,%,$<)'
+	@$(CC) -c $(CFLAGS) $(ARCHFLAGS) -I$(DIR_OBJ) -o $@ $<
 
 $(DIR_OBJ)/kernel/%_c.o: $(DIR_SRC)/kernel/%.c
 	@mkdir -p $(dir $@)

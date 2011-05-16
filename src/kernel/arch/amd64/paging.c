@@ -25,10 +25,12 @@
 #include "memory.h"
 #include "console.h"
 #include "cpuid.h"
+#include "lock.h"
 
 static uintptr_t *invalidator = (uintptr_t *)0xffffffffffffeff8ULL;
 static bool nx = false;
 static uintptr_t virtual_mask = 0x00000000ffffffffULL, physical_mask = 0x00000000ffffffffULL;
+static lock_t lock_paging = 0;
 
 void paging_init(void)
 {
@@ -98,10 +100,14 @@ paging_context_t *paging_context(void)
     {
         if (area.size == 0)
         {
+            unlock(&lock_paging);
+
             printf("%[Ran out of memory while mapping!%]", 12);
             while(1);
         }
     }
+
+    lock(&lock_paging);
 
     memory_area_t area = memory_alloc(CALL_AS_NON_SYSCALL, sizeof(paging_context_t), 0, 0);
 
@@ -172,6 +178,8 @@ paging_context_t *paging_context(void)
     pt[511] = (uintptr_t)NULL;
     pt[511] |= PAGE_PRESENT_BIT | PAGE_CACHEDISABLE_BIT;
 
+    unlock(&lock_paging);
+
     return context;
 }
 
@@ -181,6 +189,8 @@ uintptr_t paging_map(paging_context_t *context, uintptr_t virtual_address, uintp
     {
         if (area.size == 0)
         {
+            unlock(&lock_paging);
+
             printf("%[Ran out of memory while mapping!%]", 12);
             while(1);
         }
@@ -196,6 +206,8 @@ uintptr_t paging_map(paging_context_t *context, uintptr_t virtual_address, uintp
         printf("%[Tried to map reserved address!%]", 12);
         while(1);
     }
+
+    lock(&lock_paging);
 
     *invalidator = (uintptr_t)(context->cr3 & physical_mask) | PAGE_PRESENT_BIT | PAGE_CACHEDISABLE_BIT;
 
@@ -263,6 +275,8 @@ uintptr_t paging_map(paging_context_t *context, uintptr_t virtual_address, uintp
     *invalidator = (uintptr_t)NULL;
 
     __asm__ __volatile__ ("invlpg %0" : : "m" (*(uint8_t *)virtual_address));
+
+    unlock(&lock_paging);
 
     return physical_address & physical_mask;
 }

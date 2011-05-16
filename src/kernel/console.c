@@ -25,12 +25,14 @@
 
 #include "console.h"
 #include "io.h"
+#include "lock.h"
 
 static short *video = (short *)0xb8000;
 static short color = 0x0700;
 static int printed = 0;
 static char converted[256];
 static char intermediate[256];
+static lock_t lock_printf = 0;
 
 /* convert a number to a string, save result in converted */
 void convert_number(uintmax_t number, uint8_t radix, char pad, uintmax_t width, uintmax_t length, uintmax_t precision, bool uppercase, uint8_t sign)
@@ -258,6 +260,8 @@ void puts(const char *s, uintmax_t n)
 
 int printf(const char *format, ...)
 {
+    lock(&lock_printf);
+
     printed = 0;
 
     va_list args;
@@ -601,6 +605,8 @@ int printf(const char *format, ...)
     }
 
     va_end(args);
+
+    unlock(&lock_printf);
 
     return printed;
 }
