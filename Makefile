@@ -53,18 +53,7 @@ ARCH_I386 = i386
 .PHONY: all amd64 i386 i386-extract clean clean-for-real clean-deep clean-deep-for-real image-begin image-entry image-end version dirs tools test todo fixme lines
 
 all: dirs clean-deep tools
-	@echo '-------- Building ASXSoft Nuke - Operating System - kernel5 - Codename: 理コ込'
-	@echo
-	@echo "           ████████████████████▒                       ██▒  ███████▒          "
-	@echo "               █▒   █▒   █▒   █▒   ████████████████▒    ██▒      ██▒          "
-	@echo "               █▒   ███████████▒   ████████████████▒     █▒     ████▒         "
-	@echo "            ███████▒█▒   █▒   █▒                ███▒           ██▒ ██▒        "
-	@echo "               █▒   ███████████▒                ███▒   ███▒   ██▒   ██▒       "
-	@echo "               █▒        █▒                     ███▒     █▒  ██▒     ██▒      "
-	@echo "               █████▒█████████▒    ████████████████▒     █▒ ██▒       ██▒     "
-	@echo "            █████▒       █▒        ████████████████▒    ███▒             ██▒  "
-	@echo "                    ███████████▒                       █▒ ████████████████▒   "
-	@echo
+	@echo '-------- Building ASXSoft Nuke - Operating System - kernel5 - Codename: 悪意'
 	@$(MAKE) version
 	@$(MAKE) image-begin
 	@$(MAKE) "ARCH=$(ARCH)" "ARCHFLAGS=$(ARCHFLAGS)" $(ARCH)
