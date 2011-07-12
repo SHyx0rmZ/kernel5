@@ -25,6 +25,9 @@ ARCH = $(ARCH_AMD64)
 else ifeq ($(ARCH),x86)
 ARCHFLAGS = $(ARCHFLAGS_I386)
 ARCH = $(ARCH_I386)
+else # default to x86
+ARCHFLAGS = $(ARCHFLAGS_I386)
+ARCH = $(ARCH_I386)
 endif
 
 DIR_OBJ = $(DIR_CWD)/obj
